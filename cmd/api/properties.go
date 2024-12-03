@@ -7,9 +7,9 @@ import (
 )
 
 type dds struct {
-	Name string `json:"name"`
-	Age  int    `json:"age"`
-	Url  string `json:"url" validate:"required"`
+	Name string   `json:"name"`
+	Age  int      `json:"age"`
+	Url  []string `query:"url" validate:"required,min=1,dive,required,alpha"`
 }
 
 func (app *Application) GetProperties(c echo.Context) error {
@@ -26,6 +26,11 @@ func (app *Application) GetProperties(c echo.Context) error {
 		app.log.Debug().Msg("unable to validate")
 		return err
 	}
-	return c.JSON(http.StatusOK, dd)
+	dd.Url = i.Url
+	result, err := app.scraper.Properties("dd")
+	if err != nil {
+		app.log.Debug().Msgf("Unable to scrape, Error: %s", err.Error())
+	}
+	return c.JSON(http.StatusOK, result)
 
 }

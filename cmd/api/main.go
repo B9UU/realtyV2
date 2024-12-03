@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"os"
+	"realtyV2/internal/scraper"
 	"strconv"
 
 	"github.com/go-playground/validator/v10"
@@ -13,8 +14,9 @@ import (
 )
 
 type Application struct {
-	log zerolog.Logger
-	s   *echo.Echo
+	log     zerolog.Logger
+	s       *echo.Echo
+	scraper scraper.Scraper
 }
 
 func main() {
@@ -38,8 +40,11 @@ func newApp() *Application {
 	if err != nil {
 		logLevel = int(zerolog.InfoLevel)
 	}
+	log := zerolog.New(os.Stdout).Level(zerolog.Level(logLevel)).With().Timestamp().Logger()
+
 	return &Application{
-		log: zerolog.New(os.Stdout).Level(zerolog.Level(logLevel)).With().Timestamp().Logger(),
-		s:   newServer(),
+		log:     log,
+		s:       newServer(),
+		scraper: scraper.Scraper{Log: log},
 	}
 }

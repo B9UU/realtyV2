@@ -1,16 +1,16 @@
 package main
 
 import (
-	"log"
-	"os"
-	"realtyV2/internal/scraper"
-	"strconv"
-
 	"github.com/go-playground/validator/v10"
 	"github.com/joho/godotenv"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
+	_ "github.com/lib/pq"
 	"github.com/rs/zerolog"
+	"log"
+	"os"
+	"realtyV2/internal/scraper"
+	"strconv"
 )
 
 type Application struct {

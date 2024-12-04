@@ -1,22 +1,24 @@
 package main
 
 import (
+	"log"
+	"os"
+	"realtyV2/internal/data"
+	"realtyV2/internal/scraper"
+	"strconv"
+
 	"github.com/go-playground/validator/v10"
 	"github.com/joho/godotenv"
 	"github.com/labstack/echo/v4"
-	"github.com/labstack/echo/v4/middleware"
 	_ "github.com/lib/pq"
 	"github.com/rs/zerolog"
-	"log"
-	"os"
-	"realtyV2/internal/scraper"
-	"strconv"
 )
 
 type Application struct {
 	log     zerolog.Logger
 	s       *echo.Echo
 	scraper scraper.Scraper
+	store   *data.Store
 }
 
 func main() {
@@ -25,7 +27,7 @@ func main() {
 		log.Fatal("Error loading .env file")
 	}
 	app := newApp()
-	app.s.Use(middleware.Logger())
+	// app.s.Use(middleware.Logger())
 	app.routes()
 	app.s.Start(":8383")
 }
@@ -41,10 +43,15 @@ func newApp() *Application {
 		logLevel = int(zerolog.InfoLevel)
 	}
 	log := zerolog.New(os.Stdout).Level(zerolog.Level(logLevel)).With().Timestamp().Logger()
+	store, err := data.NewStore(os.Getenv("POSTGRES_URL"))
+	if err != nil {
+		panic(err)
+	}
 
 	return &Application{
 		log:     log,
 		s:       newServer(),
 		scraper: scraper.Scraper{Log: log},
+		store:   store,
 	}
 }

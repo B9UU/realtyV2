@@ -1,1 +1,1 @@
-DROP TABLE IF EXISTS amenties;
+DROP TABLE IF EXISTS amenities;

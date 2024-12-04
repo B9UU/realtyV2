@@ -27,10 +27,16 @@ func (app *Application) GetProperties(c echo.Context) error {
 		return err
 	}
 	dd.Url = i.Url
-	result, err := app.scraper.Properties("dd")
+	_, err := app.scraper.Properties("dd")
 	if err != nil {
 		app.log.Debug().Msgf("Unable to scrape, Error: %s", err.Error())
 	}
-	return c.JSON(http.StatusOK, result)
+	app.log.Debug().Msg("getting data")
+	properties, err := app.store.GetAll()
+	if err != nil {
+		app.log.Fatal().Msg(err.Error())
+		return err
+	}
+	return c.JSON(http.StatusOK, properties)
 
 }

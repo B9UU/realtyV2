@@ -18,30 +18,35 @@ func NewPropertyStore(db *sqlx.DB) *PropertyStore {
 }
 
 func (p *PropertyStore) GetAll() ([]Property, error) {
-	properties := []Property{}
-	fmt.Println("selecting")
-	err := p.DB.Select(&properties, `
-        SELECT 
-          l.id, l.placement_type,
-          l.number_of_bathrooms, l.number_of_bedrooms,
-          l.number_of_rooms, l.relevancy_sort_order,
-          l.energy_label, l.availability,
-          l.type, l.zoning, l.time_stamp,
-          l.object_type, l.construction_type,
-          l.publish_date_utc, l.publish_date,
-          l.relative_url, 
-    ARRAY_REMOVE(ARRAY_AGG(a.amenity),NULL) AS amenities
+	stmt := `
+	SELECT 
+		l.id,
+        ARRAY_REMOVE(ARRAY_AGG(a.amenity),NULL) AS amenities,
+        json_agg(to_json(ag)) AS agents
         FROM 
-          "listing" l
+          "listings" l
         LEFT JOIN 
-          "amenities" am ON l.id = am.listing_id
+          amenities am ON l.id = am.listing_id
         LEFT JOIN 
-          "amenity" a ON am.amenity_id = a.id
+          amenity a ON am.amenity_id = a.id
+        LEFT JOIN 
+            agents ag_rel ON l.id = ag_rel.listing_id
+        LEFT JOIN 
+            agent ag ON ag_rel.agent_id = ag.id
         GROUP BY 
           l.id;
-        `)
+        `
+	properties := []Property{}
+	fmt.Println("selecting")
+	err := p.DB.Select(&properties, stmt)
 	if err != nil {
+		fmt.Println("here")
 		return nil, err
 	}
+	// row := p.DB.QueryRow(stmt)
+	// err := row.Scan(&properties.ID, &properties.Amenities, &properties.Agents)
+	// if err != nil {
+	// 	return nil, err
+	// }
 	return properties, nil
 }

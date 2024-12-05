@@ -1,6 +1,9 @@
 CREATE TABLE IF NOT EXISTS amenities (
-  amenity_id integer,
-  listing_id integer,
-  CONSTRAINT fk_amenity FOREIGN KEY(amenity_id) REFERENCES amenity("id"),
-  CONSTRAINT fk_listing FOREIGN KEY(listing_id) REFERENCES listing("id")
+  amenity_id integer NOT NULL REFERENCES amenity(id) ON DELETE CASCADE,
+  listing_id integer NOT NULL REFERENCES listings(id) ON DELETE CASCADE,
+  PRIMARY KEY(amenity_id, listing_id)
 );
+
+INSERT INTO amenities (amenity_id, listing_id) VALUES (1, 1);
+INSERT INTO amenities (amenity_id, listing_id) VALUES (2, 1);
+INSERT INTO amenities (amenity_id, listing_id) VALUES (3, 1);

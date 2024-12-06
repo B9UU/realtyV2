@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"realtyV2/internal/models"
 
 	"github.com/rs/zerolog"
 )
@@ -15,7 +16,7 @@ type Scraper struct {
 	//db
 }
 
-func (s Scraper) Properties(query string) (Response, error) {
+func (s Scraper) Properties(query string) ([]models.Property, error) {
 
 	url := "https://listing-search-wonen-arc.funda.io/listings-wonen-searcher-alias-prod/_reactivesearch"
 
@@ -325,12 +326,12 @@ func (s Scraper) Properties(query string) (Response, error) {
 	}
 	payload, err := json.Marshal(settings)
 	if err != nil {
-		return Response{}, err
+		return nil, err
 	}
 	file, err := os.Create("person.json")
 	if err != nil {
 		fmt.Println("Error creating file:", err)
-		return Response{}, err
+		return nil, err
 	}
 	defer file.Close()
 
@@ -341,7 +342,7 @@ func (s Scraper) Properties(query string) (Response, error) {
 	}
 	req, err := http.NewRequest("POST", url, bytes.NewBuffer(payload))
 	if err != nil {
-		return Response{}, err
+		return nil, err
 	}
 
 	req.Header.Add("authority", "listing-search-wonen-arc.funda.io")
@@ -365,17 +366,17 @@ func (s Scraper) Properties(query string) (Response, error) {
 
 	res, err := http.DefaultClient.Do(req)
 	if err != nil {
-		return Response{}, err
+		return nil, err
 	}
 	defer res.Body.Close()
 	s.Log.Info().Caller().Msgf("Request Status code: %d", res.StatusCode)
 	if res.StatusCode != http.StatusOK {
-		return Response{}, fmt.Errorf("Unable to send request")
+		return nil, fmt.Errorf("Unable to send request")
 	}
-	df := Response{}
+	df := models.Properties{}
 	err = json.NewDecoder(res.Body).Decode(&df)
 	if err != nil {
-		return Response{}, nil
+		return nil, err
 	}
 	return df, nil
 

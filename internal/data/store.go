@@ -2,6 +2,7 @@ package data
 
 import (
 	"fmt"
+	"realtyV2/internal/models"
 
 	"github.com/jmoiron/sqlx"
 )
@@ -25,5 +26,5 @@ func NewStore(dbUrl string) (*Store, error) {
 }
 
 type PropertyInterface interface {
-	GetAll() ([]Property, error)
+	GetAll() ([]models.Property, error)
 }

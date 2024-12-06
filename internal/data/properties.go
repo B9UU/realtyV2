@@ -2,6 +2,7 @@ package data
 
 import (
 	"fmt"
+	"realtyV2/internal/models"
 
 	"github.com/jmoiron/sqlx"
 )
@@ -17,7 +18,7 @@ func NewPropertyStore(db *sqlx.DB) *PropertyStore {
 
 }
 
-func (p *PropertyStore) GetAll() ([]Property, error) {
+func (p *PropertyStore) GetAll() ([]models.Property, error) {
 	stmt := `
 	SELECT 
 		l.id,
@@ -36,7 +37,7 @@ func (p *PropertyStore) GetAll() ([]Property, error) {
         GROUP BY 
           l.id;
         `
-	properties := []Property{}
+	properties := []models.Property{}
 	fmt.Println("selecting")
 	err := p.DB.Select(&properties, stmt)
 	if err != nil {

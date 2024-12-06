@@ -1,20 +1,29 @@
 package data
 
-import "github.com/jmoiron/sqlx"
+import (
+	"fmt"
+
+	"github.com/jmoiron/sqlx"
+)
 
 type Store struct {
-	*PropertyStore
+	Property PropertyInterface
 }
 
 func NewStore(dbUrl string) (*Store, error) {
 	db, err := sqlx.Open("postgres", dbUrl)
 	if err != nil {
+		fmt.Println("error: ", err)
 		return nil, err
 	}
 	if err := db.Ping(); err != nil {
 		return nil, err
 	}
 	return &Store{
-		NewPropertyStore(db),
+		Property: NewPropertyStore(db),
 	}, err
+}
+
+type PropertyInterface interface {
+	GetAll() ([]Property, error)
 }

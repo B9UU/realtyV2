@@ -1,7 +1,6 @@
 package models
 
 import (
-	"database/sql/driver"
 	"encoding/json"
 	"errors"
 	"time"
@@ -9,36 +8,26 @@ import (
 	"github.com/lib/pq"
 )
 
-type Agent struct {
-	ID          int64  `db:"id" json:"id"`                     // Primary key
-	LogoType    string `db:"logo_type" json:"logo_type"`       // Type of logo
-	RelativeURL string `db:"relative_url" json:"relative_url"` // Relative URL for the agent
-	IsPrimary   bool   `db:"is_primary" json:"is_primary"`     // Indicates if the agent is primary
-	LogoID      int    `db:"logo_id" json:"logo_id"`           // Logo ID
-	Name        string `db:"name" json:"name"`                 // Name of the agent
-	Association string `db:"association" json:"association"`   // Association of the agent
-}
-
 // to unmarshall JSON_AGG into Agent slice
 type Agents []Agent
 
-func (a Agents) Value() (driver.Value, error) {
-	return json.Marshal(a)
-}
+// property wrapper for custom Unmarshaller
+type Properties []Property
 
-func (a *Agents) Scan(value interface{}) error {
-	b, ok := value.([]byte)
-	if !ok {
-		return errors.New("type assertion to []byte failed")
-	}
-
-	return json.Unmarshal(b, &a)
+type Agent struct {
+	ID          int64  `db:"id" json:"id"`
+	LogoType    string `db:"logo_type" json:"logo_type"`
+	RelativeURL string `db:"relative_url" json:"relative_url"`
+	IsPrimary   bool   `db:"is_primary" json:"is_primary"`
+	LogoID      int    `db:"logo_id" json:"logo_id"`
+	Name        string `db:"name" json:"name"`
+	Association string `db:"association" json:"association"`
 }
 
 type Property struct {
 	ID                          int            `json:"id,omitempty" db:"id"`
-	PlacementType               string         `json:"placement_type" db:"placement_type"`
-	NumberOfBathrooms           int            `json:"number_of_bathrooms" db:"number_of_bathrooms"`
+	PlacementType               string         `json:"placement_type,omitempty" db:"placement_type"`
+	NumberOfBathrooms           int            `json:"number_of_bathrooms,omitempty" db:"number_of_bathrooms"`
 	NumberOfBedrooms            int            `json:"number_of_bedrooms,omitempty" db:"number_of_bedrooms"`
 	NumberOfRooms               int            `json:"number_of_rooms,omitempty" db:"number_of_rooms"`
 	Amenities                   pq.StringArray `json:"amenities,omitempty" db:"amenities"`
@@ -54,11 +43,22 @@ type Property struct {
 	PublishDate                 string         `json:"publish_date,omitempty" db:"publish_date"`
 	ObjectDetailPageRelativeURL string         `json:"object_detail_page_relative_url,omitempty" db:"relative_url"`
 	Agents                      Agents         `json:"agent,omitempty" db:"agents"`
+	PlotRange                   PlotAreaRange  `json:"plot_area_range" db:"plot_area_range"`
+	PlogId                      int            `json:"plot_area_range_id" db:"plot_area_range_id"`
+}
+type PlotAreaRange struct {
+	Gte int `json:"gte" db:"gte"`
+	Lte int `json:"lte" db:"lte"`
 }
 
-// property wrapper for custom Unmarshaller
-type Properties []Property
+func (a *PlotAreaRange) Scan(value interface{}) error {
+	b, ok := value.([]byte)
+	if !ok {
+		return errors.New("type assertion to []byte failed")
+	}
 
+	return json.Unmarshal(b, &a)
+}
 func (p *Properties) UnmarshalJSON(data []byte) error {
 	temp := Response{}
 	if err := json.Unmarshal(data, &temp); err != nil {
@@ -68,4 +68,17 @@ func (p *Properties) UnmarshalJSON(data []byte) error {
 		*p = append(*p, v.Source)
 	}
 	return nil
+}
+
+// func (a Agents) Value() (driver.Value, error) {
+// 	return json.Marshal(a)
+// }
+
+func (a *Agents) Scan(value interface{}) error {
+	b, ok := value.([]byte)
+	if !ok {
+		return errors.New("type assertion to []byte failed")
+	}
+
+	return json.Unmarshal(b, &a)
 }

@@ -42,7 +42,7 @@ func newApp() *Application {
 	if err != nil {
 		logLevel = int(zerolog.InfoLevel)
 	}
-	log := zerolog.New(os.Stdout).Level(zerolog.Level(logLevel)).With().Timestamp().Logger()
+	log := zerolog.New(os.Stdout).Level(zerolog.Level(logLevel)).With().Caller().Timestamp().Logger()
 	store, err := data.NewStore(os.Getenv("POSTGRES_URL"))
 	if err != nil {
 		panic(err)

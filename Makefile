@@ -29,3 +29,8 @@ run:
 help:
 	@echo 'Usage:'
 	@sed -n 's/^##//p' ${MAKEFILE_LIST} | column -t -s ':' | sed -e 's/^/ /'
+
+## seed: to seed the db
+.PHONY: seed
+seed:
+	psql ${POSTGRES_URL} -f ./seed.sql

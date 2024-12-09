@@ -369,7 +369,6 @@ func (s Scraper) Properties(query string) ([]models.Property, error) {
 		return nil, err
 	}
 	defer res.Body.Close()
-	s.Log.Info().Caller().Msgf("Request Status code: %d", res.StatusCode)
 	if res.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("Unable to send request")
 	}

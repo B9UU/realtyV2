@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"realtyV2/internal/data"
+	"realtyV2/internal/models"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -12,8 +13,8 @@ import (
 type MockStore struct {
 }
 
-func (m *MockStore) GetAll() ([]data.Property, error) {
-	return []data.Property{}, nil
+func (m *MockStore) GetAll() ([]models.Property, error) {
+	return []models.Property{}, nil
 }
 func TestGetProperties(t *testing.T) {
 	e := newServer()

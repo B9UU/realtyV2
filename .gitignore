@@ -1,2 +1,5 @@
 *.env
 tmp
+supabase/
+person.json
+Untitled.sql

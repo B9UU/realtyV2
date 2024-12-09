@@ -14,6 +14,6 @@ CREATE TABLE IF NOT EXISTS listings (
   construction_type text NOT NULL,
   publish_date_utc timestamp NOT NULL,
   publish_date timestamp NOT NULL,
-  relative_url text,
-  plot_area_range_id integer
+  relative_url text NOT NULL,
+  plot_area_range_id integer NOT NULL
 );

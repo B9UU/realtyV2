@@ -40,6 +40,10 @@ func (app *Application) GetProperties(c echo.Context) error {
 	}
 	return c.JSON(http.StatusOK, properties)
 }
-func (app *Application) AddProperty(c echo.Context) error {
-	return nil
+func (app *Application) GetPropertyById(c echo.Context) error {
+	property, err := app.store.Property.GetById(1)
+	if err != nil {
+		app.log.Fatal().Msg(err.Error())
+	}
+	return c.JSON(http.StatusOK, property)
 }

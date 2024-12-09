@@ -29,11 +29,11 @@ VALUES
  ('For Lease', 3, 4, 6, 2, 'A', 'Occupied', 'Townhouse', 'Mixed Use',
   CURRENT_TIMESTAMP, 'Villa', 'Old', CURRENT_TIMESTAMP, CURRENT_DATE, '/listing-3',3);
 
-INSERT INTO amenity (amenity, text)
+INSERT INTO amenity (text)
 VALUES
-('Pool','pool'),
-('Gym', 'gym'),
-('Parking','parking');
+('Pool'),
+('Gym'),
+('Parking');
 
 INSERT INTO amenities (listing_id, amenity_id) 
 VALUES
@@ -62,3 +62,18 @@ VALUES
 (3, 1),
 (3, 3);
 
+
+INSERT INTO accessibility (text)
+VALUES
+('laqo'),
+('ground_floor'),
+('single_storey');
+
+INSERT INTO accessibilities (listing_id, accessibility_id) 
+VALUES
+(1, 1),
+(1, 2),
+(2, 1),
+(2, 2),
+(3, 1),
+(3, 2);

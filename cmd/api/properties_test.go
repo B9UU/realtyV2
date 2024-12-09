@@ -16,6 +16,10 @@ type MockStore struct {
 func (m *MockStore) GetAll() ([]models.Property, error) {
 	return []models.Property{}, nil
 }
+
+func (m *MockStore) GetById(id int) (models.Property, error) {
+	return models.Property{}, nil
+}
 func TestGetProperties(t *testing.T) {
 	e := newServer()
 

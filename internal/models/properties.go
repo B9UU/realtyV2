@@ -45,6 +45,7 @@ type Property struct {
 	Agents                      Agents         `json:"agent,omitempty" db:"agents"`
 	PlotRange                   PlotAreaRange  `json:"plot_area_range" db:"plot_area_range"`
 	PlogId                      int            `json:"plot_area_range_id" db:"plot_area_range_id"`
+	Accessibility               pq.StringArray `json:"accessibility" db:"accessibility"`
 }
 type PlotAreaRange struct {
 	Gte int `json:"gte" db:"gte"`

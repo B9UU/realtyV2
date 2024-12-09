@@ -27,4 +27,5 @@ func NewStore(dbUrl string) (*Store, error) {
 
 type PropertyInterface interface {
 	GetAll() ([]models.Property, error)
+	GetById(id int) (models.Property, error)
 }

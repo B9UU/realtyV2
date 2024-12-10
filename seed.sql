@@ -77,3 +77,49 @@ VALUES
 (2, 2),
 (3, 1),
 (3, 2);
+
+INSERT INTO media_type (text)
+VALUES
+('floor_plan'),
+('photo_360'),
+('video');
+
+INSERT INTO media_types (listing_id, media_type_id) 
+VALUES
+(1, 1),
+(1, 2),
+(2, 1),
+(2, 2),
+(3, 1),
+(3, 2);
+
+INSERT INTO surrounding (text)
+VALUES
+('on_quiet_road'),
+('in_residential_district'),
+('unobstructed_view');
+
+INSERT INTO surroundings (listing_id, surrounding_id) 
+VALUES
+(1, 1),
+(1, 2),
+(2, 1),
+(2, 2),
+(3, 1),
+(3, 2);
+
+INSERT INTO address (
+    listing_id, 
+    country, 
+    province, 
+    wijk, 
+    neighbourhood, 
+    house_number_suffix, 
+    municipality, 
+    is_bag_address, 
+    house_number, 
+    street_name
+) VALUES 
+(1, 'Netherlands', 'North Holland', 'Wijk 01', 'Neighbourhood A', 'A1', 'Amsterdam', true, '123', 'Main Street'),
+(2, 'Netherlands', 'South Holland', 'Wijk 02', 'Neighbourhood B', 'B2', 'Rotterdam', false, '456', 'Second Avenue'),
+(3, 'Netherlands', 'Utrecht', 'Wijk 03', 'Neighbourhood C', 'C3', 'Utrecht', true, '789', 'Third Boulevard');

@@ -14,16 +14,6 @@ type Agents []Agent
 // property wrapper for custom Unmarshaller
 type Properties []Property
 
-type Agent struct {
-	ID          int64  `db:"id" json:"id"`
-	LogoType    string `db:"logo_type" json:"logo_type"`
-	RelativeURL string `db:"relative_url" json:"relative_url"`
-	IsPrimary   bool   `db:"is_primary" json:"is_primary"`
-	LogoID      int    `db:"logo_id" json:"logo_id"`
-	Name        string `db:"name" json:"name"`
-	Association string `db:"association" json:"association"`
-}
-
 type Property struct {
 	ID                          int            `json:"id,omitempty" db:"id"`
 	PlacementType               string         `json:"placement_type,omitempty" db:"placement_type"`
@@ -42,10 +32,13 @@ type Property struct {
 	PublishDateUtc              time.Time      `json:"publish_date_utc,omitempty" db:"publish_date_utc"`
 	PublishDate                 string         `json:"publish_date,omitempty" db:"publish_date"`
 	ObjectDetailPageRelativeURL string         `json:"object_detail_page_relative_url,omitempty" db:"relative_url"`
-	Agents                      Agents         `json:"agent,omitempty" db:"agents"`
 	PlotRange                   PlotAreaRange  `json:"plot_area_range" db:"plot_area_range"`
+	Agents                      Agents         `json:"agents,omitempty" db:"agents"`
 	PlogId                      int            `json:"plot_area_range_id" db:"plot_area_range_id"`
 	Accessibility               pq.StringArray `json:"accessibility" db:"accessibility"`
+	Types                       pq.StringArray `json:"types" db:"types"`
+	Surrounding                 pq.StringArray `json:"surrounding" db:"surrounding"`
+	Address                     Address        `json:"address,omitempty" db:"address"`
 }
 type PlotAreaRange struct {
 	Gte int `json:"gte" db:"gte"`
@@ -53,6 +46,47 @@ type PlotAreaRange struct {
 }
 
 func (a *PlotAreaRange) Scan(value interface{}) error {
+	b, ok := value.([]byte)
+	if !ok {
+		return errors.New("type assertion to []byte failed")
+	}
+
+	return json.Unmarshal(b, &a)
+}
+
+type Agent struct {
+	ID          int64  `db:"id" json:"id,omitempty"`
+	LogoType    string `db:"logo_type" json:"logo_type,omitempty"`
+	RelativeURL string `db:"relative_url" json:"relative_url,omitempty"`
+	IsPrimary   bool   `db:"is_primary" json:"is_primary,omitempty"`
+	LogoID      int    `db:"logo_id" json:"logo_id,omitempty"`
+	Name        string `db:"name" json:"name,omitempty"`
+	Association string `db:"association" json:"association,omitempty"`
+}
+
+func (a *Agents) Scan(value interface{}) error {
+	b, ok := value.([]byte)
+	if !ok {
+		return errors.New("type assertion to []byte failed")
+	}
+
+	return json.Unmarshal(b, &a)
+}
+
+type Address struct {
+	Country       string `json:"country,omitempty" db:"country"`
+	Province      string `json:"province,omitempty" db:"province"`
+	Wijk          string `json:"wijk,omitempty" db:"wijk"`
+	City          string `json:"city,omitempty" db:"city"`
+	Neighbourhood string `json:"neighbourhood,omitempty" db:"neighbourhood"`
+	Municipality  string `json:"municipality,omitempty" db:"municipality"`
+	IsBagAddress  bool   `json:"is_bag_address,omitempty" db:"is_bag_address"`
+	HouseNumber   string `json:"house_number,omitempty" db:"house_number"`
+	PostalCode    string `json:"postal_code,omitempty" db:"postal_code"`
+	StreetName    string `json:"street_name,omitempty" db:"street_name"`
+}
+
+func (a *Address) Scan(value interface{}) error {
 	b, ok := value.([]byte)
 	if !ok {
 		return errors.New("type assertion to []byte failed")
@@ -74,12 +108,3 @@ func (p *Properties) UnmarshalJSON(data []byte) error {
 // func (a Agents) Value() (driver.Value, error) {
 // 	return json.Marshal(a)
 // }
-
-func (a *Agents) Scan(value interface{}) error {
-	b, ok := value.([]byte)
-	if !ok {
-		return errors.New("type assertion to []byte failed")
-	}
-
-	return json.Unmarshal(b, &a)
-}

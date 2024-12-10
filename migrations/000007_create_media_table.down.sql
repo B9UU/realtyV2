@@ -1,0 +1,2 @@
+DROP TABLE IF EXISTS media_types;
+DROP TABLE IF EXISTS media_type;

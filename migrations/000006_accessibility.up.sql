@@ -4,7 +4,7 @@ CREATE TABLE IF NOT EXISTS accessibility (
 );
 
 CREATE TABLE IF NOT EXISTS accessibilities (
-  accessibility_id integer NOT NULL REFERENCES amenity(id) ON DELETE CASCADE,
+  accessibility_id integer NOT NULL REFERENCES accessibility(id) ON DELETE CASCADE,
   listing_id integer NOT NULL REFERENCES listings(id) ON DELETE CASCADE,
   PRIMARY KEY(accessibility_id, listing_id)
 );

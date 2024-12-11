@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"os"
 	"realtyV2/internal/models"
 
 	"github.com/rs/zerolog"
@@ -327,18 +326,6 @@ func (s Scraper) Properties(query string) ([]models.Property, error) {
 	payload, err := json.Marshal(settings)
 	if err != nil {
 		return nil, err
-	}
-	file, err := os.Create("person.json")
-	if err != nil {
-		fmt.Println("Error creating file:", err)
-		return nil, err
-	}
-	defer file.Close()
-
-	// Write the JSON data to the file
-	_, err = file.Write(payload)
-	if err != nil {
-		fmt.Println("Error writing to file:", err)
 	}
 	req, err := http.NewRequest("POST", url, bytes.NewBuffer(payload))
 	if err != nil {

@@ -61,10 +61,8 @@ GROUP BY l.id, par.id, address.id;
 
 `
 	properties := []models.Property{}
-	fmt.Println("selecting")
 	err := p.DB.Select(&properties, stmt)
 	if err != nil {
-		fmt.Println("here")
 		return nil, err
 	}
 	return properties, nil
@@ -73,8 +71,8 @@ func (p *PropertyStore) GetById(id int) (models.Property, error) {
 
 	stmt := `
 SELECT 
-    l.id,
-    ARRAY_AGG(DISTINCT mtp.text) FILTER (WHERE mtp.text IS NOT NULL) as types,
+    l.*,
+    ARRAY_AGG(DISTINCT mtp.text) FILTER (WHERE mtp.text IS NOT NULL) as media_types,
     ARRAY_AGG(DISTINCT amnt.text) FILTER (WHERE amnt.text IS NOT NULL) as amenities,
     ARRAY_AGG(DISTINCT acc.text) FILTER (WHERE acc.text IS NOT NULL) as accessibility,
     ARRAY_AGG(DISTINCT srnd.text) FILTER (WHERE srnd.text IS NOT NULL) as surrounding,
@@ -112,10 +110,8 @@ GROUP BY l.id, par.id, address.id;
 
 `
 	properties := models.Property{}
-	fmt.Println("selecting")
-	err := p.DB.Get(&properties, stmt, 4)
+	err := p.DB.Get(&properties, stmt, id)
 	if err != nil {
-		fmt.Println("here")
 		return models.Property{}, err
 	}
 	return properties, nil
@@ -123,6 +119,16 @@ GROUP BY l.id, par.id, address.id;
 
 func (p *PropertyStore) AddOne(listing models.Property) error {
 	ctx := context.TODO()
+	stmt := `
+	SELECT id FROM listings WHERE id = $1;
+	`
+	err := p.DB.QueryRowContext(ctx, stmt, listing.ID).Scan()
+	if err == nil {
+		return nil
+	}
+	if err != sql.ErrNoRows {
+		return err
+	}
 	tx, err := p.DB.Beginx()
 	if err != nil {
 		return err
@@ -136,7 +142,7 @@ func (p *PropertyStore) AddOne(listing models.Property) error {
 	}()
 
 	var plot_id int
-	stmt :=
+	stmt =
 		`
 		INSERT INTO plot_area_range (gte, lte)
 		VALUES ($1, $2) RETURNING id;
@@ -147,7 +153,6 @@ func (p *PropertyStore) AddOne(listing models.Property) error {
 		return err
 	}
 
-	fmt.Println("added plot")
 	listing.PlogId = plot_id
 
 	_, err = tx.NamedExecContext(ctx, `
@@ -193,7 +198,6 @@ VALUES(
 	if err != nil {
 		return fmt.Errorf("Failed at inserting to Property: %v", err.Error())
 	}
-	fmt.Println("added listing")
 	err = p.InsertAmenities(ctx, tx, listing.Amenities, listing.ID)
 	if err != nil {
 		return err

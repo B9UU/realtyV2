@@ -2,6 +2,7 @@ package main
 
 import (
 	"net/http"
+	"strconv"
 
 	"github.com/labstack/echo/v4"
 )
@@ -30,11 +31,13 @@ func (app *Application) GetProperties(c echo.Context) error {
 	properties, err := app.scraper.Properties("dd")
 	if err != nil {
 		app.log.Debug().Msgf("Unable to scrape, Error: %s", err.Error())
-	}
-	err = app.store.Property.AddOne(properties[0])
-	if err != nil {
-		app.log.Fatal().Caller().Msgf("unable to add one: %v", err.Error())
 		return err
+	}
+	for _, prop := range properties {
+		err = app.store.Property.AddOne(prop)
+		if err != nil {
+			app.log.Error().Caller().Msgf("unable to add one: %v", err.Error())
+		}
 	}
 	// app.log.Debug().Msg("getting data")
 	// properties, err := app.store.Property.GetAll()
@@ -45,9 +48,14 @@ func (app *Application) GetProperties(c echo.Context) error {
 	return c.JSON(http.StatusOK, properties)
 }
 func (app *Application) GetPropertyById(c echo.Context) error {
-	property, err := app.store.Property.GetById(1)
+	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
-		app.log.Fatal().Msg(err.Error())
+		return err
+	}
+	property, err := app.store.Property.GetById(id)
+	if err != nil {
+		app.log.Error().Msg(err.Error())
+		return err
 	}
 	return c.JSON(http.StatusOK, property)
 }

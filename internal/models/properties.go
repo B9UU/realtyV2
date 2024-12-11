@@ -32,13 +32,15 @@ type Property struct {
 	PublishDateUtc              time.Time      `json:"publish_date_utc,omitempty" db:"publish_date_utc"`
 	PublishDate                 string         `json:"publish_date,omitempty" db:"publish_date"`
 	ObjectDetailPageRelativeURL string         `json:"object_detail_page_relative_url,omitempty" db:"relative_url"`
-	PlotRange                   PlotAreaRange  `json:"plot_area_range" db:"plot_area_range"`
+	PlotRange                   PlotAreaRange  `json:"plot_area_range,omitempty" db:"plot_area_range"`
 	Agents                      Agents         `json:"agents,omitempty" db:"agents"`
-	PlogId                      int            `json:"plot_area_range_id" db:"plot_area_range_id"`
-	Accessibility               pq.StringArray `json:"accessibility" db:"accessibility"`
-	Types                       pq.StringArray `json:"types" db:"types"`
-	Surrounding                 pq.StringArray `json:"surrounding" db:"surrounding"`
+	PlogId                      int            `json:"plot_area_range_id,omitempty" db:"plot_area_range_id"`
+	Accessibility               pq.StringArray `json:"accessibility,omitempty" db:"accessibility"`
+	MediaTypes                  pq.StringArray `json:"media_types,omitempty" db:"media_types"`
+	Surrounding                 pq.StringArray `json:"surrounding,omitempty" db:"surrounding"`
 	Address                     Address        `json:"address,omitempty" db:"address"`
+	Parking                     pq.StringArray `json:"parking_facility,omitempty" db:"parking_facility"`
+	Price                       int            `json:"price" db:"price"`
 }
 type PlotAreaRange struct {
 	Gte int `json:"gte" db:"gte"`
@@ -100,7 +102,34 @@ func (p *Properties) UnmarshalJSON(data []byte) error {
 		return err
 	}
 	for _, v := range temp.SearchResult.Hits.Hits {
-		*p = append(*p, v.Source)
+		newP := Property{
+			ID:                          v.Source.ID,
+			PlacementType:               v.Source.PlacementType,
+			NumberOfBathrooms:           v.Source.NumberOfBathrooms,
+			NumberOfBedrooms:            v.Source.NumberOfBedrooms,
+			NumberOfRooms:               v.Source.NumberOfRooms,
+			Amenities:                   v.Source.Amenities,
+			RelevancySortOrder:          v.Source.RelevancySortOrder,
+			EnergyLabel:                 v.Source.EnergyLabel,
+			Availability:                v.Source.Availability,
+			Type:                        *v.Source.Type,
+			Zoning:                      v.Source.Zoning,
+			TimeStamp:                   v.Source.TimeStamp,
+			ObjectType:                  v.Source.ObjectType,
+			ConstructionType:            v.Source.ConstructionType,
+			PublishDateUtc:              v.Source.PublishDateUtc,
+			PublishDate:                 v.Source.PublishDate,
+			ObjectDetailPageRelativeURL: v.Source.ObjectDetailPageRelativeURL,
+			PlotRange:                   PlotAreaRange(v.Source.PlotAreaRange),
+			Agents:                      v.Source.Agent,
+			Accessibility:               v.Source.Accessibility,
+			MediaTypes:                  v.Source.AvailableMediaTypes,
+			Surrounding:                 v.Source.Surrounding,
+			Address:                     v.Source.Address,
+			Parking:                     v.Source.ParkingFacility,
+			Price:                       v.Source.Price.SellingPriceRange.Lte,
+		}
+		*p = append(*p, newP)
 	}
 	return nil
 }

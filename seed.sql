@@ -123,3 +123,18 @@ INSERT INTO address (
 (1, 'Netherlands', 'North Holland', 'Wijk 01', 'Neighbourhood A', 'A1', 'Amsterdam', true, '123', 'Main Street'),
 (2, 'Netherlands', 'South Holland', 'Wijk 02', 'Neighbourhood B', 'B2', 'Rotterdam', false, '456', 'Second Avenue'),
 (3, 'Netherlands', 'Utrecht', 'Wijk 03', 'Neighbourhood C', 'C3', 'Utrecht', true, '789', 'Third Boulevard');
+
+INSERT INTO parking (text)
+VALUES
+('paid_parking'),
+('parking_permits'),
+('parking_rental');
+
+INSERT INTO parkings (listing_id, parking_id) 
+VALUES
+(1, 1),
+(1, 2),
+(2, 1),
+(2, 2),
+(3, 1),
+(3, 2);

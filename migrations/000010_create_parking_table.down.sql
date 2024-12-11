@@ -1,0 +1,2 @@
+DROP TABLE IF EXISTS parkings;
+DROP TABLE IF EXISTS parking;

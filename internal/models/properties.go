@@ -8,6 +8,15 @@ import (
 	"github.com/lib/pq"
 )
 
+type Amenities struct {
+	ListingID int `db:"listing_id"`
+	AmenityID int `db:"amenity_id"`
+}
+type Amenity struct {
+	ID   int    `db:"id"`
+	Text string `db:"text"`
+}
+
 // to unmarshall JSON_AGG into Agent slice
 type Agents []Agent
 

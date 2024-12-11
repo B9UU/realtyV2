@@ -31,7 +31,11 @@ func (app *Application) GetProperties(c echo.Context) error {
 	if err != nil {
 		app.log.Debug().Msgf("Unable to scrape, Error: %s", err.Error())
 	}
-
+	err = app.store.Property.AddOne(properties[0])
+	if err != nil {
+		app.log.Fatal().Caller().Msgf("unable to add one: %v", err.Error())
+		return err
+	}
 	// app.log.Debug().Msg("getting data")
 	// properties, err := app.store.Property.GetAll()
 	// if err != nil {

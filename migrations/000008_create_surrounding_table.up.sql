@@ -1,6 +1,6 @@
 CREATE TABLE IF NOT EXISTS  surrounding(
     id bigserial PRIMARY KEY,
-    text text NOT NULL
+    text text NOT NULL UNIQUE
 );
 
 CREATE TABLE IF NOT EXISTS  surroundings(

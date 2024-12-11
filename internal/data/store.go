@@ -28,4 +28,6 @@ func NewStore(dbUrl string) (*Store, error) {
 type PropertyInterface interface {
 	GetAll() ([]models.Property, error)
 	GetById(id int) (models.Property, error)
+	AddOne(listing models.Property) error
+	// InsertAmenities(ctx context.Context, tx *sqlx.Tx, amenities []string, listingID int) error
 }

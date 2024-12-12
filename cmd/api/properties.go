@@ -2,6 +2,7 @@ package main
 
 import (
 	"net/http"
+	"realtyV2/internal/data"
 	"strconv"
 
 	"github.com/labstack/echo/v4"
@@ -36,6 +37,10 @@ func (app *Application) GetProperties(c echo.Context) error {
 	for _, prop := range properties {
 		err = app.store.Property.AddOne(prop)
 		if err != nil {
+			if err == data.AlreadyExists {
+				app.log.Info().Msg("Already exists")
+				continue
+			}
 			app.log.Error().Caller().Msgf("unable to add one: %v", err.Error())
 		}
 	}

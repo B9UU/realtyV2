@@ -3,11 +3,14 @@ package data
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"realtyV2/internal/models"
 
 	"github.com/jmoiron/sqlx"
 )
+
+var AlreadyExists = errors.New("Listing already exsists")
 
 type PropertyStore struct {
 	DB *sqlx.DB
@@ -122,9 +125,10 @@ func (p *PropertyStore) AddOne(listing models.Property) error {
 	stmt := `
 	SELECT id FROM listings WHERE id = $1;
 	`
-	err := p.DB.QueryRowContext(ctx, stmt, listing.ID).Scan()
+	var lisId int
+	err := p.DB.QueryRowContext(ctx, stmt, listing.ID).Scan(&lisId)
 	if err == nil {
-		return nil
+		return AlreadyExists
 	}
 	if err != sql.ErrNoRows {
 		return err
@@ -133,22 +137,8 @@ func (p *PropertyStore) AddOne(listing models.Property) error {
 	if err != nil {
 		return err
 	}
-	defer func() {
-		if err != nil {
-			_ = tx.Rollback()
-			return
-		}
-		err = tx.Commit()
-	}()
-
-	var plot_id int
-	stmt =
-		`
-		INSERT INTO plot_area_range (gte, lte)
-		VALUES ($1, $2) RETURNING id;
-	`
-	err = tx.QueryRowContext(ctx, stmt,
-		listing.PlotRange.Gte, listing.PlotRange.Lte).Scan(&plot_id)
+	defer tx.Rollback()
+	plot_id, err := p.InsertPlotRange(ctx, tx, listing.PlotRange)
 	if err != nil {
 		return err
 	}
@@ -173,7 +163,8 @@ INSERT INTO listings (
   publish_date_utc,
   publish_date,
   relative_url,
-  plot_area_range_id
+  plot_area_range_id,
+  price
 ) 
 VALUES(
 	:id,
@@ -192,13 +183,27 @@ VALUES(
  	:publish_date_utc,
  	:publish_date,
  	:relative_url,
- 	:plot_area_range_id
+ 	:plot_area_range_id,
+	:price
+
+
 )
 `, listing)
 	if err != nil {
 		return fmt.Errorf("Failed at inserting to Property: %v", err.Error())
 	}
+	fmt.Println("here")
 	err = p.InsertAmenities(ctx, tx, listing.Amenities, listing.ID)
+	if err != nil {
+		return err
+	}
+
+	fmt.Println("here2")
+	err = p.InsertAgents(ctx, tx, listing.Agents, listing.ID)
+	if err != nil {
+		return err
+	}
+	err = tx.Commit()
 	if err != nil {
 		return err
 	}
@@ -229,6 +234,60 @@ func (p *PropertyStore) InsertAmenities(ctx context.Context, tx *sqlx.Tx, amenit
 			return fmt.Errorf("error inserting into amenities %w", err)
 		}
 
+	}
+	return nil
+}
+func (p *PropertyStore) InsertPlotRange(ctx context.Context, tx *sqlx.Tx, plot models.PlotAreaRange) (int, error) {
+	var plot_id int
+	stmt := `SELECT id FROM plot_area_range WHERE gte=$1 and lte=$2;`
+	args := []interface{}{plot.Gte, plot.Lte}
+	err := tx.QueryRowContext(ctx, stmt, args...).Scan(&plot_id)
+	if err != nil && err != sql.ErrNoRows {
+		return 0, err
+	}
+	stmt =
+		`
+		INSERT INTO plot_area_range (gte, lte)
+		VALUES ($1, $2) RETURNING id;
+	`
+	err = tx.QueryRowContext(ctx, stmt, args...).Scan(&plot_id)
+	if err != nil {
+		return 0, err
+	}
+	return plot_id, nil
+}
+
+func (p *PropertyStore) InsertAgents(ctx context.Context, tx *sqlx.Tx, agents models.Agents, listingID int) error {
+	for _, agent := range agents {
+		var agentID int
+		stmt := `SELECT id from agent WHERE id=$1;`
+		err := tx.QueryRowContext(ctx, stmt, agent.ID).Scan(&agentID)
+		if err != nil {
+			if err == sql.ErrNoRows {
+				stmt = `
+					INSERT INTO agent (
+						id, logo_type, relative_url,
+						is_primary, logo_id, name, association
+					) VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING id;`
+				args := []interface{}{
+					agent.ID, agent.LogoType, agent.RelativeURL,
+					agent.IsPrimary, agent.LogoID, agent.Name, agent.Association}
+
+				err = tx.QueryRowContext(ctx, stmt, args...).Scan(&agentID)
+				if err != nil {
+					return fmt.Errorf("error inserting agent %w", err)
+				}
+			} else {
+				return fmt.Errorf("error checking agent %w", err)
+			}
+		}
+		stmt = `
+		INSERT INTO agents (listing_id, agent_id) VALUES($1,$2)
+		`
+		_, err = tx.ExecContext(ctx, stmt, listingID, agentID)
+		if err != nil {
+			return fmt.Errorf("error inserting into agents %w", err)
+		}
 	}
 	return nil
 }

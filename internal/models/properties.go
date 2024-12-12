@@ -85,16 +85,17 @@ func (a *Agents) Scan(value interface{}) error {
 }
 
 type Address struct {
-	Country       string `json:"country,omitempty" db:"country"`
-	Province      string `json:"province,omitempty" db:"province"`
-	Wijk          string `json:"wijk,omitempty" db:"wijk"`
-	City          string `json:"city,omitempty" db:"city"`
-	Neighbourhood string `json:"neighbourhood,omitempty" db:"neighbourhood"`
-	Municipality  string `json:"municipality,omitempty" db:"municipality"`
-	IsBagAddress  bool   `json:"is_bag_address,omitempty" db:"is_bag_address"`
-	HouseNumber   string `json:"house_number,omitempty" db:"house_number"`
-	PostalCode    string `json:"postal_code,omitempty" db:"postal_code"`
-	StreetName    string `json:"street_name,omitempty" db:"street_name"`
+	Country           string `json:"country,omitempty" db:"country"`
+	Province          string `json:"province,omitempty" db:"province"`
+	Wijk              string `json:"wijk,omitempty" db:"wijk"`
+	City              string `json:"city,omitempty" db:"city"`
+	Neighbourhood     string `json:"neighbourhood,omitempty" db:"neighbourhood"`
+	HouseNumberSuffix string `json:"house_number_suffix" db:"house_number_suffix"`
+	Municipality      string `json:"municipality,omitempty" db:"municipality"`
+	IsBagAddress      bool   `json:"is_bag_address,omitempty" db:"is_bag_address"`
+	HouseNumber       string `json:"house_number,omitempty" db:"house_number"`
+	PostalCode        string `json:"postal_code,omitempty" db:"postal_code"`
+	StreetName        string `json:"street_name,omitempty" db:"street_name"`
 }
 
 func (a *Address) Scan(value interface{}) error {

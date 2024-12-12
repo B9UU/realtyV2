@@ -205,6 +205,22 @@ VALUES(
 	if err != nil {
 		return err
 	}
+	err = p.InsertAttr(ctx, tx, "media_type", "media_types", listing.MediaTypes, listing.ID)
+	if err != nil {
+		return err
+	}
+	err = p.InsertAttr(ctx, tx, "surrounding", "surroundings", listing.Surrounding, listing.ID)
+	if err != nil {
+		return err
+	}
+	err = p.InsertAttr(ctx, tx, "parking", "parkings", listing.Parking, listing.ID)
+	if err != nil {
+		return err
+	}
+	err = p.InsertAddress(ctx, tx, listing.Address, listing.ID)
+	if err != nil {
+		return err
+	}
 	err = tx.Commit()
 	if err != nil {
 		return err
@@ -317,6 +333,35 @@ func (p *PropertyStore) InsertAttr(ctx context.Context, tx *sqlx.Tx, table, tabl
 			return fmt.Errorf("error inserting into %s %w", tables, err)
 		}
 
+	}
+	return nil
+}
+
+func (p *PropertyStore) InsertAddress(ctx context.Context, tx *sqlx.Tx, address models.Address, listing_id int) error {
+
+	var listingID int
+	stmt := `SELECT listing_id from address WHERE listing_id=$1;`
+	err := tx.QueryRowContext(ctx, stmt, listing_id).Scan(&listingID)
+	if err != nil && err != sql.ErrNoRows {
+		return fmt.Errorf("error checking address %w", err)
+	}
+	stmt = `
+		INSERT INTO address (
+		listing_id, country, province, wijk, city,
+		neighbourhood, house_number_suffix, municipality,
+		is_bag_address, house_number,postal_code, street_name
+		) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)
+		`
+	args := []interface{}{
+		listing_id, address.Country, address.Province,
+		address.Wijk, address.City, address.Neighbourhood,
+		address.HouseNumberSuffix, address.Municipality,
+		address.IsBagAddress, address.HouseNumber,
+		address.PostalCode, address.StreetName}
+
+	_, err = tx.ExecContext(ctx, stmt, args...)
+	if err != nil {
+		return fmt.Errorf("error inserting address %w", err)
 	}
 	return nil
 }

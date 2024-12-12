@@ -192,14 +192,16 @@ VALUES(
 	if err != nil {
 		return fmt.Errorf("Failed at inserting to Property: %v", err.Error())
 	}
-	fmt.Println("here")
-	err = p.InsertAmenities(ctx, tx, listing.Amenities, listing.ID)
+	err = p.InsertAttr(ctx, tx, "amenity", "amenities", listing.Amenities, listing.ID)
 	if err != nil {
 		return err
 	}
 
-	fmt.Println("here2")
 	err = p.InsertAgents(ctx, tx, listing.Agents, listing.ID)
+	if err != nil {
+		return err
+	}
+	err = p.InsertAttr(ctx, tx, "accessibility", "accessibilities", listing.Accessibility, listing.ID)
 	if err != nil {
 		return err
 	}
@@ -210,33 +212,35 @@ VALUES(
 	return nil
 
 }
-func (p *PropertyStore) InsertAmenities(ctx context.Context, tx *sqlx.Tx, amenities []string, listingID int) error {
-	for _, amenity := range amenities {
-		var amenityID int
-		stmt := `SELECT id from amenity WHERE text=$1;`
-		err := tx.QueryRowContext(ctx, stmt, amenity).Scan(&amenityID)
-		if err != nil {
-			if err == sql.ErrNoRows {
-				stmt = `INSERT INTO amenity (text) VALUES($1) RETURNING id`
-				err := tx.QueryRowContext(ctx, stmt, amenity).Scan(&amenityID)
-				if err != nil {
-					return fmt.Errorf("error inserting amenity %w", err)
-				}
-			} else {
-				return fmt.Errorf("error checking amenity %w", err)
-			}
-		}
-		stmt = `
-		INSERT INTO amenities (listing_id, amenity_id) VALUES($1,$2)
-		`
-		_, err = tx.ExecContext(ctx, stmt, listingID, amenityID)
-		if err != nil {
-			return fmt.Errorf("error inserting into amenities %w", err)
-		}
 
-	}
-	return nil
-}
+//	func (p *PropertyStore) InsertAmenities(ctx context.Context, tx *sqlx.Tx, amenities []string, listingID int) error {
+//		for _, amenity := range amenities {
+//			var amenityID int
+//			stmt := `SELECT id from amenity WHERE text=$1;`
+//			err := tx.QueryRowContext(ctx, stmt, amenity).Scan(&amenityID)
+//			if err != nil {
+//				if err == sql.ErrNoRows {
+//					stmt = `INSERT INTO amenity (text) VALUES($1) RETURNING id`
+//					err := tx.QueryRowContext(ctx, stmt, amenity).Scan(&amenityID)
+//					if err != nil {
+//						return fmt.Errorf("error inserting amenity %w", err)
+//					}
+//				} else {
+//					return fmt.Errorf("error checking amenity %w", err)
+//				}
+//			}
+//			stmt = `
+//			INSERT INTO amenities (listing_id, amenity_id) VALUES($1,$2)
+//			`
+//			_, err = tx.ExecContext(ctx, stmt, listingID, amenityID)
+//			if err != nil {
+//				return fmt.Errorf("error inserting into amenities %w", err)
+//			}
+//
+//		}
+//
+// return nil
+// }
 func (p *PropertyStore) InsertPlotRange(ctx context.Context, tx *sqlx.Tx, plot models.PlotAreaRange) (int, error) {
 	var plot_id int
 	stmt := `SELECT id FROM plot_area_range WHERE gte=$1 and lte=$2;`
@@ -288,6 +292,31 @@ func (p *PropertyStore) InsertAgents(ctx context.Context, tx *sqlx.Tx, agents mo
 		if err != nil {
 			return fmt.Errorf("error inserting into agents %w", err)
 		}
+	}
+	return nil
+}
+func (p *PropertyStore) InsertAttr(ctx context.Context, tx *sqlx.Tx, table, tables string, attrs []string, listingID int) error {
+	for _, attr := range attrs {
+		var attrID int
+		stmt := fmt.Sprintf(`SELECT id from %s WHERE text=$1;`, table)
+		err := tx.QueryRowContext(ctx, stmt, attr).Scan(&attrID)
+		if err != nil {
+			if err == sql.ErrNoRows {
+				stmt = fmt.Sprintf(`INSERT INTO %s (text) VALUES($1) RETURNING id`, table)
+				err := tx.QueryRowContext(ctx, stmt, attr).Scan(&attrID)
+				if err != nil {
+					return fmt.Errorf("error inserting %s %w", table, err)
+				}
+			} else {
+				return fmt.Errorf("error checking %s %w", table, err)
+			}
+		}
+		stmt = fmt.Sprintf(`INSERT INTO %s (listing_id, %s_id) VALUES($1,$2)`, tables, table)
+		_, err = tx.ExecContext(ctx, stmt, listingID, attrID)
+		if err != nil {
+			return fmt.Errorf("error inserting into %s %w", tables, err)
+		}
+
 	}
 	return nil
 }

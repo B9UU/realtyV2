@@ -50,6 +50,7 @@ type Property struct {
 	Address                     Address        `json:"address,omitempty" db:"address"`
 	Parking                     pq.StringArray `json:"parking_facility,omitempty" db:"parking_facility"`
 	Price                       int            `json:"price" db:"price"`
+	OfferingType                pq.StringArray `json:"offering_type" db:"offering_type"`
 }
 type PlotAreaRange struct {
 	Gte int `json:"gte" db:"gte"`
@@ -138,6 +139,7 @@ func (p *Properties) UnmarshalJSON(data []byte) error {
 			Address:                     v.Source.Address,
 			Parking:                     v.Source.ParkingFacility,
 			Price:                       v.Source.Price.SellingPriceRange.Lte,
+			OfferingType:                v.Source.OfferingType,
 		}
 		*p = append(*p, newP)
 	}

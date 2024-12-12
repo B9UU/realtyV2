@@ -51,7 +51,7 @@ func newApp() *Application {
 	return &Application{
 		log:     log,
 		s:       newServer(),
-		scraper: scraper.Scraper{Log: log},
+		scraper: scraper.Scraper{Log: log, Size: 20},
 		store:   store,
 	}
 }

@@ -26,7 +26,8 @@ func NewPropertyStore(db *sqlx.DB) *PropertyStore {
 func (p *PropertyStore) GetAll() ([]models.Property, error) {
 	stmt := `
 SELECT 
-    l.id,
+    l.*,
+    ARRAY_AGG(DISTINCT offering_type.text) FILTER (WHERE offering_type.text IS NOT NULL) as offering_type,
     ARRAY_AGG(DISTINCT mtp.text) FILTER (WHERE mtp.text IS NOT NULL) as media_types,
     ARRAY_AGG(DISTINCT amnt.text) FILTER (WHERE amnt.text IS NOT NULL) as amenities,
     ARRAY_AGG(DISTINCT acc.text) FILTER (WHERE acc.text IS NOT NULL) as accessibility,
@@ -56,9 +57,12 @@ LEFT JOIN surrounding srnd ON srnds.surrounding_id = srnd.id
 LEFT JOIN address ON address.listing_id = l.id
 
 LEFT JOIN plot_area_range par ON par.id = l.plot_area_range_id
+
 LEFT JOIN parkings ON parkings.listing_id = l.id
 LEFT JOIN parking ON parkings.parking_id = parking.id
 
+LEFT JOIN offering_types ON offering_types.listing_id = l.id
+LEFT JOIN offering_type ON offering_type.id = offering_types.offering_type_id
 
 GROUP BY l.id, par.id, address.id;
 
@@ -75,6 +79,8 @@ func (p *PropertyStore) GetById(id int) (models.Property, error) {
 	stmt := `
 SELECT 
     l.*,
+
+    ARRAY_AGG(DISTINCT offering_type.text) FILTER (WHERE offering_type.text IS NOT NULL) as offering_type,
     ARRAY_AGG(DISTINCT mtp.text) FILTER (WHERE mtp.text IS NOT NULL) as media_types,
     ARRAY_AGG(DISTINCT amnt.text) FILTER (WHERE amnt.text IS NOT NULL) as amenities,
     ARRAY_AGG(DISTINCT acc.text) FILTER (WHERE acc.text IS NOT NULL) as accessibility,
@@ -104,8 +110,12 @@ LEFT JOIN surrounding srnd ON srnds.surrounding_id = srnd.id
 LEFT JOIN address ON address.listing_id = l.id
 
 LEFT JOIN plot_area_range par ON par.id = l.plot_area_range_id
+
 LEFT JOIN parkings ON parkings.listing_id = l.id
 LEFT JOIN parking ON parkings.parking_id = parking.id
+
+LEFT JOIN offering_types ON offering_types.listing_id = l.id
+LEFT JOIN offering_type ON offering_type.id = offering_types.offering_type_id
 
 WHERE l.id = $1
 
@@ -217,6 +227,11 @@ VALUES(
 	if err != nil {
 		return err
 	}
+	err = p.InsertAttr(ctx, tx, "offering_type", "offering_types", listing.OfferingType, listing.ID)
+	if err != nil {
+		return err
+	}
+	fmt.Println(listing.OfferingType)
 	err = p.InsertAddress(ctx, tx, listing.Address, listing.ID)
 	if err != nil {
 		return err
@@ -226,7 +241,6 @@ VALUES(
 		return err
 	}
 	return nil
-
 }
 
 //	func (p *PropertyStore) InsertAmenities(ctx context.Context, tx *sqlx.Tx, amenities []string, listingID int) error {

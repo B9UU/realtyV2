@@ -1,35 +1,35 @@
 package main
 
 import (
+	"fmt"
 	"net/http"
 	"realtyV2/internal/data"
 	"strconv"
 
+	"github.com/go-playground/validator/v10"
 	"github.com/labstack/echo/v4"
 )
 
-type dds struct {
-	Name string   `json:"name"`
-	Age  int      `json:"age"`
-	Url  []string `query:"url" validate:"required,min=1,dive,required,alpha"`
+type queries struct {
+	Page  int    `query:"page" validate:"numeric"`
+	Query string `query:"q" validate:"required"`
 }
 
+var validate = validator.New()
+
 func (app *Application) GetProperties(c echo.Context) error {
-	dd := dds{
-		Name: "laoq",
-		Age:  22,
+	q := new(queries)
+
+	if err := c.Bind(q); err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, "Invalid input")
 	}
-	i := new(dds)
-	if err := c.Bind(i); err != nil {
-		app.log.Debug().Msg("unable to parse params")
-		return c.JSON(http.StatusBadRequest, err.Error())
+
+	if err := validate.Struct(q); err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
-	if err := c.Validate(i); err != nil {
-		app.log.Debug().Msg("unable to validate")
-		return err
-	}
-	dd.Url = i.Url
-	properties, err := app.scraper.Properties("dd")
+
+	fmt.Println(q)
+	properties, err := app.scraper.Properties(q.Query, q.Page)
 	if err != nil {
 		app.log.Debug().Msgf("Unable to scrape, Error: %s", err.Error())
 		return err

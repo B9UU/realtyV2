@@ -11,11 +11,11 @@ import (
 )
 
 type Scraper struct {
-	Log zerolog.Logger
-	//db
+	Log  zerolog.Logger
+	Size int
 }
 
-func (s Scraper) Properties(query string) ([]models.Property, error) {
+func (s Scraper) Properties(q string, page int) ([]models.Property, error) {
 
 	url := "https://listing-search-wonen-arc.funda.io/listings-wonen-searcher-alias-prod/_reactivesearch"
 
@@ -46,8 +46,8 @@ func (s Scraper) Properties(query string) ([]models.Property, error) {
 						"object_type_apartment", "object_type_parking", "object_type_parking_capacity", "search_result__internal",
 					},
 				},
-				"size": 15,
-				"from": 15,
+				"size": s.Size,
+				"from": page * s.Size,
 				"defaultQuery": map[string]interface{}{
 					"track_total_hits": true,
 					"timeout":          "1s",
@@ -65,7 +65,7 @@ func (s Scraper) Properties(query string) ([]models.Property, error) {
 				"execute":   false,
 				"customQuery": map[string]interface{}{
 					"id":     "location-query-v2",
-					"params": map[string]interface{}{"location": []string{"amsterdam"}},
+					"params": map[string]interface{}{"location": []string{q}},
 				},
 			},
 			{

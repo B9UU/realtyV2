@@ -122,7 +122,7 @@ WHERE l.id = $1
 GROUP BY l.id, par.id, address.id;
 
 `
-	properties := models.Property{}
+	properties := models.Property{ID: id}
 	err := p.DB.Get(&properties, stmt, id)
 	if err != nil {
 		return models.Property{}, err
@@ -243,40 +243,12 @@ VALUES(
 	return nil
 }
 
-//	func (p *PropertyStore) InsertAmenities(ctx context.Context, tx *sqlx.Tx, amenities []string, listingID int) error {
-//		for _, amenity := range amenities {
-//			var amenityID int
-//			stmt := `SELECT id from amenity WHERE text=$1;`
-//			err := tx.QueryRowContext(ctx, stmt, amenity).Scan(&amenityID)
-//			if err != nil {
-//				if err == sql.ErrNoRows {
-//					stmt = `INSERT INTO amenity (text) VALUES($1) RETURNING id`
-//					err := tx.QueryRowContext(ctx, stmt, amenity).Scan(&amenityID)
-//					if err != nil {
-//						return fmt.Errorf("error inserting amenity %w", err)
-//					}
-//				} else {
-//					return fmt.Errorf("error checking amenity %w", err)
-//				}
-//			}
-//			stmt = `
-//			INSERT INTO amenities (listing_id, amenity_id) VALUES($1,$2)
-//			`
-//			_, err = tx.ExecContext(ctx, stmt, listingID, amenityID)
-//			if err != nil {
-//				return fmt.Errorf("error inserting into amenities %w", err)
-//			}
-//
-//		}
-//
-// return nil
-// }
 func (p *PropertyStore) InsertPlotRange(ctx context.Context, tx *sqlx.Tx, plot models.PlotAreaRange) (int, error) {
 	var plot_id int
 	stmt := `SELECT id FROM plot_area_range WHERE gte=$1 and lte=$2;`
 	args := []interface{}{plot.Gte, plot.Lte}
 	err := tx.QueryRowContext(ctx, stmt, args...).Scan(&plot_id)
-	if err != nil && err != sql.ErrNoRows {
+	if err != nil {
 		return 0, err
 	}
 	stmt =
@@ -297,27 +269,26 @@ func (p *PropertyStore) InsertAgents(ctx context.Context, tx *sqlx.Tx, agents mo
 		stmt := `SELECT id from agent WHERE id=$1;`
 		err := tx.QueryRowContext(ctx, stmt, agent.ID).Scan(&agentID)
 		if err != nil {
-			if err == sql.ErrNoRows {
-				stmt = `
-					INSERT INTO agent (
-						id, logo_type, relative_url,
-						is_primary, logo_id, name, association
-					) VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING id;`
-				args := []interface{}{
-					agent.ID, agent.LogoType, agent.RelativeURL,
-					agent.IsPrimary, agent.LogoID, agent.Name, agent.Association}
-
-				err = tx.QueryRowContext(ctx, stmt, args...).Scan(&agentID)
-				if err != nil {
-					return fmt.Errorf("error inserting agent %w", err)
-				}
-			} else {
+			if err != sql.ErrNoRows {
 				return fmt.Errorf("error checking agent %w", err)
+			}
+			stmt = `
+			INSERT INTO agent (
+				id, logo_type, relative_url,
+				is_primary, logo_id, name, association
+			) VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING id;`
+			args := []interface{}{
+				agent.ID, agent.LogoType, agent.RelativeURL,
+				agent.IsPrimary, agent.LogoID, agent.Name, agent.Association}
+
+			err = tx.QueryRowContext(ctx, stmt, args...).Scan(&agentID)
+			if err != nil {
+				return fmt.Errorf("error inserting agent %w", err)
 			}
 		}
 		stmt = `
-		INSERT INTO agents (listing_id, agent_id) VALUES($1,$2)
-		`
+				INSERT INTO agents (listing_id, agent_id) VALUES($1,$2)
+				`
 		_, err = tx.ExecContext(ctx, stmt, listingID, agentID)
 		if err != nil {
 			return fmt.Errorf("error inserting into agents %w", err)
@@ -331,14 +302,13 @@ func (p *PropertyStore) InsertAttr(ctx context.Context, tx *sqlx.Tx, table, tabl
 		stmt := fmt.Sprintf(`SELECT id from %s WHERE text=$1;`, table)
 		err := tx.QueryRowContext(ctx, stmt, attr).Scan(&attrID)
 		if err != nil {
-			if err == sql.ErrNoRows {
-				stmt = fmt.Sprintf(`INSERT INTO %s (text) VALUES($1) RETURNING id`, table)
-				err := tx.QueryRowContext(ctx, stmt, attr).Scan(&attrID)
-				if err != nil {
-					return fmt.Errorf("error inserting %s %w", table, err)
-				}
-			} else {
+			if err != sql.ErrNoRows {
 				return fmt.Errorf("error checking %s %w", table, err)
+			}
+			stmt = fmt.Sprintf(`INSERT INTO %s (text) VALUES($1) RETURNING id`, table)
+			err = tx.QueryRowContext(ctx, stmt, attr).Scan(&attrID)
+			if err != nil {
+				return fmt.Errorf("error inserting %s %w", table, err)
 			}
 		}
 		stmt = fmt.Sprintf(`INSERT INTO %s (listing_id, %s_id) VALUES($1,$2)`, tables, table)
@@ -346,20 +316,13 @@ func (p *PropertyStore) InsertAttr(ctx context.Context, tx *sqlx.Tx, table, tabl
 		if err != nil {
 			return fmt.Errorf("error inserting into %s %w", tables, err)
 		}
-
 	}
 	return nil
 }
 
 func (p *PropertyStore) InsertAddress(ctx context.Context, tx *sqlx.Tx, address models.Address, listing_id int) error {
 
-	var listingID int
-	stmt := `SELECT listing_id from address WHERE listing_id=$1;`
-	err := tx.QueryRowContext(ctx, stmt, listing_id).Scan(&listingID)
-	if err != nil && err != sql.ErrNoRows {
-		return fmt.Errorf("error checking address %w", err)
-	}
-	stmt = `
+	stmt := `
 		INSERT INTO address (
 		listing_id, country, province, wijk, city,
 		neighbourhood, house_number_suffix, municipality,
@@ -373,9 +336,17 @@ func (p *PropertyStore) InsertAddress(ctx context.Context, tx *sqlx.Tx, address 
 		address.IsBagAddress, address.HouseNumber,
 		address.PostalCode, address.StreetName}
 
-	_, err = tx.ExecContext(ctx, stmt, args...)
+	_, err := tx.ExecContext(ctx, stmt, args...)
 	if err != nil {
 		return fmt.Errorf("error inserting address %w", err)
 	}
+	return nil
+}
+func bindName() error {
+	// q, args, err := sqlx.BindNamed(sqlx.BindType(p.DB.DriverName()), `SELECT listing_id from address WHERE listing_id=:id AND name=:placement_type;`, properties)
+	// if err != nil {
+	// 	return models.Property{}, err
+	// }
+	// fmt.Println(q, args)
 	return nil
 }

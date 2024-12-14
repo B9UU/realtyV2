@@ -17,6 +17,7 @@ func NewStore(dbUrl string) (*Store, error) {
 		fmt.Println("error: ", err)
 		return nil, err
 	}
+	fmt.Println(db.DriverName())
 	if err := db.Ping(); err != nil {
 		return nil, err
 	}

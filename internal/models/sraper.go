@@ -64,7 +64,11 @@ type Listing struct {
 		Availability string  `json:"availability"`
 		Type         *string `json:"type"`
 		Price        struct {
-			SellingPrice      []int `json:"selling_price"`
+			SellingPrice   []int `json:"selling_price"`
+			RentPriceRange struct {
+				Gte int `json:"gte"`
+				Lte int `json:"lte"`
+			} `json:"rent_price_range"`
 			SellingPriceRange struct {
 				Gte int `json:"gte"`
 				Lte int `json:"lte"`
@@ -92,7 +96,7 @@ type Listing struct {
 		} `json:"garage"`
 		FloorArea        []int     `json:"floor_area"`
 		ConstructionType string    `json:"construction_type"`
-		ThumbnailID      []int     `json:"thumbnail_id"`
+		ThumbnailID      []int64   `json:"thumbnail_id"`
 		OfferingType     []string  `json:"offering_type"`
 		PlotArea         []int     `json:"plot_area"`
 		PublishDateUtc   time.Time `json:"publish_date_utc"`

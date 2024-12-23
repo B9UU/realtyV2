@@ -51,9 +51,10 @@ type Property struct {
 	Surrounding                 pq.StringArray `json:"surrounding,omitempty" db:"surrounding"`
 	Address                     Address        `json:"address,omitempty" db:"address"`
 	Parking                     pq.StringArray `json:"parking_facility,omitempty" db:"parking_facility"`
-	Price                       int            `json:"price" db:"price"`
+	SellPrice                   int            `json:"sell_price,omitempty" db:"sell_price"`
+	RentPrice                   int            `json:"rent_price,omitempty" db:"rent_price"`
 	OfferingType                pq.StringArray `json:"offering_type" db:"offering_type"`
-	Thumb                       []int          `json:"thumbnail_id" db:"thumbnail_id"`
+	Thumb                       pq.Int64Array  `json:"thumbnail_id" db:"thumbnail_id"`
 }
 type AreaRange struct {
 	Gte int `json:"gte" db:"gte"`
@@ -142,13 +143,25 @@ func (p *Properties) UnmarshalJSON(data []byte) error {
 			Surrounding:                 v.Source.Surrounding,
 			Address:                     v.Source.Address,
 			Parking:                     v.Source.ParkingFacility,
-			Price:                       v.Source.Price.SellingPriceRange.Lte,
-			OfferingType:                v.Source.OfferingType,
-			Thumb:                       v.Source.ThumbnailID,
+			SellPrice:                   v.Source.Price.SellingPriceRange.Lte,
+			RentPrice:                   v.Source.Price.RentPriceRange.Lte,
+
+			OfferingType: v.Source.OfferingType,
+			Thumb:        v.Source.ThumbnailID,
 		}
 		*p = append(*p, newP)
 	}
 	return nil
+}
+
+type Prop struct {
+	Id           int            `json:"id,omitempty"`
+	ObjectType   string         `json:"object_type,omitempty"`
+	OfferingType pq.StringArray `json:"offering_type,omitempty"`
+	Type         string         `json:"type,omitempty"`
+	Address      Address        `json:"address,omitempty"`
+	RentPrice    int            `json:"rent_price,omitempty"`
+	SellPrince   int            `json:"sell_prince,omitempty"`
 }
 
 // func (a Agents) Value() (driver.Value, error) {

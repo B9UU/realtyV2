@@ -17,5 +17,6 @@ CREATE TABLE IF NOT EXISTS listings (
   relative_url text NOT NULL,
   plot_area_range_id integer NOT NULL,
   floor_area_range_id integer NOT NULL,
-  price integer NOT NULL
+  sell_price integer NOT NULL,
+  rent_price integer NOT NULL
 );

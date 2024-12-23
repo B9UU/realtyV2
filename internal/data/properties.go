@@ -92,7 +92,10 @@ SELECT
 
     COALESCE(row_to_json(par),'{}')as plot_area_range,
     COALESCE(json_agg(DISTINCT agnt) FILTER (WHERE agnt.id IS NOT NULL), '[]') AS agents,
-    COALESCE(row_to_json(address),'{}') as address
+    COALESCE(row_to_json(address),'{}') as address,
+	
+    ARRAY_AGG(DISTINCT thumbnail.img) FILTER (WHERE thumbnail.img IS NOT NULL) as thumbnail_id
+
 
 FROM listings l
 LEFT JOIN amenities amnts ON amnts.listing_id = l.id
@@ -119,6 +122,8 @@ LEFT JOIN parking ON parkings.parking_id = parking.id
 
 LEFT JOIN offering_types ON offering_types.listing_id = l.id
 LEFT JOIN offering_type ON offering_type.id = offering_types.offering_type_id
+
+LEFT JOIN thumbnail ON thumbnail.listing_id = l.id
 
 WHERE l.id = $1
 
@@ -186,7 +191,8 @@ INSERT INTO listings (
   relative_url,
   plot_area_range_id,
   floor_area_range_id,
-  price
+  sell_price,
+  rent_price
 ) 
 VALUES(
 	:id,
@@ -207,7 +213,8 @@ VALUES(
  	:relative_url,
  	:plot_area_range_id,
  	:floor_area_range_id,
-	:price
+	:sell_price,
+	:rent_price
 
 
 )
@@ -377,7 +384,7 @@ func (p *PropertyStore) InsertAddress(ctx context.Context, tx *sqlx.Tx, address 
 	return nil
 }
 
-func (p *PropertyStore) InsertThumb(ctx context.Context, tx *sqlx.Tx, listingId int, ids []int) error {
+func (p *PropertyStore) InsertThumb(ctx context.Context, tx *sqlx.Tx, listingId int, ids []int64) error {
 	stmt := `
 	INSERT INTO thumbnail(listing_id,img)
 	VALUES($1,$2)

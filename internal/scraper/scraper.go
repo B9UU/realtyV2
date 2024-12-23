@@ -76,7 +76,7 @@ func (s Scraper) Properties(q string, page int) ([]models.Property, error) {
 				"defaultQuery": map[string]interface{}{
 					"timeout": "500ms",
 				},
-				"value": "buy",
+				"value": "rent",
 			},
 			{
 				"id":        "sort",

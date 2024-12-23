@@ -41,9 +41,11 @@ type Property struct {
 	PublishDateUtc              time.Time      `json:"publish_date_utc,omitempty" db:"publish_date_utc"`
 	PublishDate                 string         `json:"publish_date,omitempty" db:"publish_date"`
 	ObjectDetailPageRelativeURL string         `json:"object_detail_page_relative_url,omitempty" db:"relative_url"`
-	PlotRange                   PlotAreaRange  `json:"plot_area_range,omitempty" db:"plot_area_range"`
+	PlotRange                   AreaRange      `json:"plot_area_range,omitempty" db:"plot_area_range"`
+	FloorRange                  AreaRange      `json:"floor_area_range,omitempty" db:"floor_area_range"`
 	Agents                      Agents         `json:"agents,omitempty" db:"agents"`
-	PlogId                      int            `json:"plot_area_range_id,omitempty" db:"plot_area_range_id"`
+	PlotId                      int            `json:"plot_area_range_id,omitempty" db:"plot_area_range_id"`
+	FloorId                     int            `json:"floor_area_range_id,omitempty" db:"floor_area_range_id"`
 	Accessibility               pq.StringArray `json:"accessibility,omitempty" db:"accessibility"`
 	MediaTypes                  pq.StringArray `json:"media_types,omitempty" db:"media_types"`
 	Surrounding                 pq.StringArray `json:"surrounding,omitempty" db:"surrounding"`
@@ -51,13 +53,14 @@ type Property struct {
 	Parking                     pq.StringArray `json:"parking_facility,omitempty" db:"parking_facility"`
 	Price                       int            `json:"price" db:"price"`
 	OfferingType                pq.StringArray `json:"offering_type" db:"offering_type"`
+	Thumb                       []int          `json:"thumbnail_id" db:"thumbnail_id"`
 }
-type PlotAreaRange struct {
+type AreaRange struct {
 	Gte int `json:"gte" db:"gte"`
 	Lte int `json:"lte" db:"lte"`
 }
 
-func (a *PlotAreaRange) Scan(value interface{}) error {
+func (a *AreaRange) Scan(value interface{}) error {
 	b, ok := value.([]byte)
 	if !ok {
 		return errors.New("type assertion to []byte failed")
@@ -131,7 +134,8 @@ func (p *Properties) UnmarshalJSON(data []byte) error {
 			PublishDateUtc:              v.Source.PublishDateUtc,
 			PublishDate:                 v.Source.PublishDate,
 			ObjectDetailPageRelativeURL: v.Source.ObjectDetailPageRelativeURL,
-			PlotRange:                   PlotAreaRange(v.Source.PlotAreaRange),
+			PlotRange:                   AreaRange(v.Source.PlotAreaRange),
+			FloorRange:                  AreaRange(v.Source.FloorAreaRange),
 			Agents:                      v.Source.Agent,
 			Accessibility:               v.Source.Accessibility,
 			MediaTypes:                  v.Source.AvailableMediaTypes,
@@ -140,6 +144,7 @@ func (p *Properties) UnmarshalJSON(data []byte) error {
 			Parking:                     v.Source.ParkingFacility,
 			Price:                       v.Source.Price.SellingPriceRange.Lte,
 			OfferingType:                v.Source.OfferingType,
+			Thumb:                       v.Source.ThumbnailID,
 		}
 		*p = append(*p, newP)
 	}

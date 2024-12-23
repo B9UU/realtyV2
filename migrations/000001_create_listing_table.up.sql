@@ -16,5 +16,6 @@ CREATE TABLE IF NOT EXISTS listings (
   publish_date timestamp NOT NULL,
   relative_url text NOT NULL,
   plot_area_range_id integer NOT NULL,
+  floor_area_range_id integer NOT NULL,
   price integer NOT NULL
 );

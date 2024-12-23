@@ -8,17 +8,20 @@ import (
 	"realtyV2/internal/models"
 
 	"github.com/jmoiron/sqlx"
+	"github.com/rs/zerolog"
 )
 
-var AlreadyExists = errors.New("Listing already exsists")
+var ErrAlreadyExists = errors.New("Listing already exsists")
 
 type PropertyStore struct {
-	DB *sqlx.DB
+	DB  *sqlx.DB
+	Log zerolog.Logger
 }
 
-func NewPropertyStore(db *sqlx.DB) *PropertyStore {
+func NewPropertyStore(db *sqlx.DB, log zerolog.Logger) *PropertyStore {
 	return &PropertyStore{
-		DB: db,
+		DB:  db,
+		Log: log,
 	}
 
 }
@@ -135,10 +138,11 @@ func (p *PropertyStore) AddOne(listing models.Property) error {
 	stmt := `
 	SELECT id FROM listings WHERE id = $1;
 	`
+	p.Log.Debug().Msgf("Checking listing: %d", listing.ID)
 	var lisId int
 	err := p.DB.QueryRowContext(ctx, stmt, listing.ID).Scan(&lisId)
 	if err == nil {
-		return AlreadyExists
+		return ErrAlreadyExists
 	}
 	if err != sql.ErrNoRows {
 		return err
@@ -148,13 +152,20 @@ func (p *PropertyStore) AddOne(listing models.Property) error {
 		return err
 	}
 	defer tx.Rollback()
-	plot_id, err := p.InsertPlotRange(ctx, tx, listing.PlotRange)
+
+	plot_id, err := p.InsertRange(ctx, tx, listing.PlotRange, "plot")
 	if err != nil {
 		return err
 	}
 
-	listing.PlogId = plot_id
+	floor_id, err := p.InsertRange(ctx, tx, listing.PlotRange, "floor")
+	if err != nil {
+		return err
+	}
+	listing.PlotId = plot_id
+	listing.FloorId = floor_id
 
+	p.Log.Debug().Msgf("Insert Listing: %d", listing.ID)
 	_, err = tx.NamedExecContext(ctx, `
 INSERT INTO listings (
 	id,
@@ -174,6 +185,7 @@ INSERT INTO listings (
   publish_date,
   relative_url,
   plot_area_range_id,
+  floor_area_range_id,
   price
 ) 
 VALUES(
@@ -194,6 +206,7 @@ VALUES(
  	:publish_date,
  	:relative_url,
  	:plot_area_range_id,
+ 	:floor_area_range_id,
 	:price
 
 
@@ -231,8 +244,11 @@ VALUES(
 	if err != nil {
 		return err
 	}
-	fmt.Println(listing.OfferingType)
 	err = p.InsertAddress(ctx, tx, listing.Address, listing.ID)
+	if err != nil {
+		return err
+	}
+	err = p.InsertThumb(ctx, tx, listing.ID, listing.Thumb)
 	if err != nil {
 		return err
 	}
@@ -243,30 +259,37 @@ VALUES(
 	return nil
 }
 
-func (p *PropertyStore) InsertPlotRange(ctx context.Context, tx *sqlx.Tx, plot models.PlotAreaRange) (int, error) {
+func (p *PropertyStore) InsertRange(ctx context.Context, tx *sqlx.Tx, ARange models.AreaRange, rangeTpe string) (int, error) {
 	var plot_id int
-	stmt := `SELECT id FROM plot_area_range WHERE gte=$1 and lte=$2;`
-	args := []interface{}{plot.Gte, plot.Lte}
+	stmt := fmt.Sprintf(`SELECT id FROM %s_area_range WHERE gte=$1 and lte=$2;`, rangeTpe)
+	args := []interface{}{ARange.Gte, ARange.Lte}
+	p.Log.Debug().Msg("Checking plot_area: ")
 	err := tx.QueryRowContext(ctx, stmt, args...).Scan(&plot_id)
 	if err != nil {
-		return 0, err
-	}
-	stmt =
-		`
-		INSERT INTO plot_area_range (gte, lte)
+		if err != sql.ErrNoRows {
+			return 0, err
+		}
+		stmt = fmt.Sprintf(
+			`
+		INSERT INTO %s_area_range (gte, lte)
 		VALUES ($1, $2) RETURNING id;
-	`
-	err = tx.QueryRowContext(ctx, stmt, args...).Scan(&plot_id)
-	if err != nil {
-		return 0, err
+		`, rangeTpe)
+		p.Log.Debug().Msg("inserting plot_area:")
+		err = tx.QueryRowContext(ctx, stmt, args...).Scan(&plot_id)
+		if err != nil {
+			return 0, err
+		}
 	}
 	return plot_id, nil
 }
 
 func (p *PropertyStore) InsertAgents(ctx context.Context, tx *sqlx.Tx, agents models.Agents, listingID int) error {
+
 	for _, agent := range agents {
 		var agentID int
 		stmt := `SELECT id from agent WHERE id=$1;`
+
+		p.Log.Debug().Msgf("Checking agent: %d", agent.ID)
 		err := tx.QueryRowContext(ctx, stmt, agent.ID).Scan(&agentID)
 		if err != nil {
 			if err != sql.ErrNoRows {
@@ -281,6 +304,7 @@ func (p *PropertyStore) InsertAgents(ctx context.Context, tx *sqlx.Tx, agents mo
 				agent.ID, agent.LogoType, agent.RelativeURL,
 				agent.IsPrimary, agent.LogoID, agent.Name, agent.Association}
 
+			p.Log.Debug().Msgf("inserting agent: %d", agent.ID)
 			err = tx.QueryRowContext(ctx, stmt, args...).Scan(&agentID)
 			if err != nil {
 				return fmt.Errorf("error inserting agent %w", err)
@@ -289,6 +313,8 @@ func (p *PropertyStore) InsertAgents(ctx context.Context, tx *sqlx.Tx, agents mo
 		stmt = `
 				INSERT INTO agents (listing_id, agent_id) VALUES($1,$2)
 				`
+
+		p.Log.Debug().Msgf("inserting agents: %d", agent.ID)
 		_, err = tx.ExecContext(ctx, stmt, listingID, agentID)
 		if err != nil {
 			return fmt.Errorf("error inserting into agents %w", err)
@@ -297,21 +323,28 @@ func (p *PropertyStore) InsertAgents(ctx context.Context, tx *sqlx.Tx, agents mo
 	return nil
 }
 func (p *PropertyStore) InsertAttr(ctx context.Context, tx *sqlx.Tx, table, tables string, attrs []string, listingID int) error {
+
 	for _, attr := range attrs {
 		var attrID int
 		stmt := fmt.Sprintf(`SELECT id from %s WHERE text=$1;`, table)
+
+		p.Log.Debug().Msgf("Checking attr: %s", table)
 		err := tx.QueryRowContext(ctx, stmt, attr).Scan(&attrID)
 		if err != nil {
 			if err != sql.ErrNoRows {
 				return fmt.Errorf("error checking %s %w", table, err)
 			}
 			stmt = fmt.Sprintf(`INSERT INTO %s (text) VALUES($1) RETURNING id`, table)
+
+			p.Log.Debug().Msgf("inserting to attr: %s", table)
 			err = tx.QueryRowContext(ctx, stmt, attr).Scan(&attrID)
 			if err != nil {
 				return fmt.Errorf("error inserting %s %w", table, err)
 			}
 		}
 		stmt = fmt.Sprintf(`INSERT INTO %s (listing_id, %s_id) VALUES($1,$2)`, tables, table)
+
+		p.Log.Debug().Msgf("inserting to attr: %s", tables)
 		_, err = tx.ExecContext(ctx, stmt, listingID, attrID)
 		if err != nil {
 			return fmt.Errorf("error inserting into %s %w", tables, err)
@@ -336,9 +369,27 @@ func (p *PropertyStore) InsertAddress(ctx context.Context, tx *sqlx.Tx, address 
 		address.IsBagAddress, address.HouseNumber,
 		address.PostalCode, address.StreetName}
 
+	p.Log.Debug().Msg("inserting address")
 	_, err := tx.ExecContext(ctx, stmt, args...)
 	if err != nil {
 		return fmt.Errorf("error inserting address %w", err)
+	}
+	return nil
+}
+
+func (p *PropertyStore) InsertThumb(ctx context.Context, tx *sqlx.Tx, listingId int, ids []int) error {
+	stmt := `
+	INSERT INTO thumbnail(listing_id,img)
+	VALUES($1,$2)
+	`
+	p.Log.Debug().Msg("inserting images")
+	for _, img := range ids {
+		args := []interface{}{listingId, img}
+		_, err := tx.ExecContext(ctx, stmt, args...)
+		if err != nil {
+			p.Log.Debug().Msg(err.Error())
+			continue
+		}
 	}
 	return nil
 }

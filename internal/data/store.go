@@ -5,13 +5,14 @@ import (
 	"realtyV2/internal/models"
 
 	"github.com/jmoiron/sqlx"
+	"github.com/rs/zerolog"
 )
 
 type Store struct {
 	Property PropertyInterface
 }
 
-func NewStore(dbUrl string) (*Store, error) {
+func NewStore(dbUrl string, log zerolog.Logger) (*Store, error) {
 	db, err := sqlx.Open("postgres", dbUrl)
 	if err != nil {
 		fmt.Println("error: ", err)
@@ -22,7 +23,7 @@ func NewStore(dbUrl string) (*Store, error) {
 		return nil, err
 	}
 	return &Store{
-		Property: NewPropertyStore(db),
+		Property: NewPropertyStore(db, log),
 	}, err
 }
 

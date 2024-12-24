@@ -26,6 +26,11 @@ func NewPropertyStore(db *sqlx.DB, log zerolog.Logger) *PropertyStore {
 
 }
 
+// TODO: search by location
+// SELECT id
+// FROM listings
+// WHERE geohash && ST_MakeEnvelope(4.3793095, 51.8616672, 4.6018083, 51.9942816, 4326);
+
 func (p *PropertyStore) GetAll() ([]models.Property, error) {
 	stmt := `
 SELECT 
@@ -192,7 +197,8 @@ INSERT INTO listings (
   plot_area_range_id,
   floor_area_range_id,
   sell_price,
-  rent_price
+  rent_price,
+  geohash
 ) 
 VALUES(
 	:id,
@@ -214,8 +220,8 @@ VALUES(
  	:plot_area_range_id,
  	:floor_area_range_id,
 	:sell_price,
-	:rent_price
-
+	:rent_price,
+	st_point(:lon, :lat)
 
 )
 `, listing)

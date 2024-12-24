@@ -17,6 +17,7 @@ type Scraper struct {
 
 func (s Scraper) Properties(q string, page int) ([]models.Property, error) {
 
+	s.Log.Debug().Msg(q)
 	url := "https://listing-search-wonen-arc.funda.io/listings-wonen-searcher-alias-prod/_reactivesearch"
 
 	settings := map[string]interface{}{
@@ -76,7 +77,7 @@ func (s Scraper) Properties(q string, page int) ([]models.Property, error) {
 				"defaultQuery": map[string]interface{}{
 					"timeout": "500ms",
 				},
-				"value": "rent",
+				"value": "buy",
 			},
 			{
 				"id":        "sort",

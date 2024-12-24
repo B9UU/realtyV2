@@ -18,5 +18,6 @@ CREATE TABLE IF NOT EXISTS listings (
   plot_area_range_id integer NOT NULL,
   floor_area_range_id integer NOT NULL,
   sell_price integer NOT NULL,
-  rent_price integer NOT NULL
+  rent_price integer NOT NULL,
+  geohash geography(POINT) NOT NULL
 );

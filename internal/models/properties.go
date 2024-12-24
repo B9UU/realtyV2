@@ -55,6 +55,8 @@ type Property struct {
 	RentPrice                   int            `json:"rent_price,omitempty" db:"rent_price"`
 	OfferingType                pq.StringArray `json:"offering_type" db:"offering_type"`
 	Thumb                       pq.Int64Array  `json:"thumbnail_id" db:"thumbnail_id"`
+	Lon                         float32        `json:"lon" db:"lon"`
+	Lat                         float32        `json:"lat" db:"lat"`
 }
 type AreaRange struct {
 	Gte int `json:"gte" db:"gte"`
@@ -145,10 +147,11 @@ func (p *Properties) UnmarshalJSON(data []byte) error {
 			Parking:                     v.Source.ParkingFacility,
 			SellPrice:                   v.Source.Price.SellingPriceRange.Lte,
 			RentPrice:                   v.Source.Price.RentPriceRange.Lte,
-
-			OfferingType: v.Source.OfferingType,
-			Thumb:        v.Source.ThumbnailID,
+			OfferingType:                v.Source.OfferingType,
+			Thumb:                       v.Source.ThumbnailID,
 		}
+		newP.Lat = float32(v.Source.Location.Lat)
+		newP.Lon = float32(v.Source.Location.Lon)
 		*p = append(*p, newP)
 	}
 	return nil

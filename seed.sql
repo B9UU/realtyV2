@@ -2,6 +2,10 @@ INSERT INTO plot_area_range (gte, lte) VALUES
 (0, 100),
 (101, 200),
 (201, 300);
+INSERT INTO floor_area_range (gte, lte) VALUES
+(0, 100),
+(101, 200),
+(201, 300);
 
 INSERT INTO listings (
   placement_type,
@@ -19,15 +23,22 @@ INSERT INTO listings (
   publish_date_utc,
   publish_date,
   relative_url,
-  plot_area_range_id
+  plot_area_range_id,
+  geohash
 ) 
 VALUES
   ('For Sale', 2, 3, 5, 1, 'A+', 'Available', 'Apartment', 'Residential',
-  CURRENT_TIMESTAMP, 'House', 'New', CURRENT_TIMESTAMP, CURRENT_DATE, '/listing-1',1),
+  CURRENT_TIMESTAMP, 'House', 'New', CURRENT_TIMESTAMP, CURRENT_DATE, '/listing-1',1,
+  st_point(4.928693771362305,52.357444763183594)
+  ),
  ('For Rent', 1, 1, 2, 5, 'B', 'Available', 'Studio', 'Commercial',
-  CURRENT_TIMESTAMP, 'Office', 'Renovated', CURRENT_TIMESTAMP, CURRENT_DATE, '/listing-2',2),
+  CURRENT_TIMESTAMP, 'Office', 'Renovated', CURRENT_TIMESTAMP, CURRENT_DATE, '/listing-2',2,
+  st_point(4.920249938964844,52.363773345947266)
+  ),
  ('For Lease', 3, 4, 6, 2, 'A', 'Occupied', 'Townhouse', 'Mixed Use',
-  CURRENT_TIMESTAMP, 'Villa', 'Old', CURRENT_TIMESTAMP, CURRENT_DATE, '/listing-3',3);
+  CURRENT_TIMESTAMP, 'Villa', 'Old', CURRENT_TIMESTAMP, CURRENT_DATE, '/listing-3',3,
+  st_point(4.7990851402282715,52.37359619140625)
+  );
 
 INSERT INTO amenity (text)
 VALUES

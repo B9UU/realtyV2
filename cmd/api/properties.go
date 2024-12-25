@@ -4,26 +4,37 @@ import (
 	"net/http"
 	"realtyV2/internal/data"
 	"realtyV2/internal/models"
+	"realtyV2/internal/validator"
 	"strconv"
 
-	"github.com/go-playground/validator/v10"
 	"github.com/labstack/echo/v4"
 )
 
 type queries struct {
-	Page  int    `query:"page" validate:"numeric"`
-	Query string `query:"q" validate:"required"`
+	Page  int    `query:"page"`
+	Query string `query:"q"`
 }
 
-var validate = validator.New()
+func ValidateInput(v *validator.Validator, q *queries) {
+	v.Check(q.Page > 0, "page", "must be greater than zero")
+	v.Check(q.Page <= 10_000_000, "page", "must be between 1 - 10 million")
 
+	v.Check(q.Query != "", "query", "must be provided")
+	v.Check(len(q.Query) >= 3, "query", "must be longer than 3")
+
+}
 func (app *Application) GetProperties(c echo.Context) error {
+	var v = validator.New()
 	q := new(queries)
 	if err := c.Bind(q); err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, "Invalid input")
 	}
-	if err := validate.Struct(q); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+	if q.Page < 1 {
+		q.Page = 1
+	}
+	if ValidateInput(v, q); !v.Valid() {
+		return app.failedValidationRespone(c, v.Errors)
+
 	}
 	properties, err := app.scraper.Properties(q.Query, q.Page)
 	if err != nil {

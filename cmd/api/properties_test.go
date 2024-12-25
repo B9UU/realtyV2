@@ -20,6 +20,11 @@ func (m *MockStore) GetAll() ([]models.Property, error) {
 func (m *MockStore) GetById(id int) (models.Property, error) {
 	return models.Property{}, nil
 }
+
+func (m *MockStore) AddOne(listing models.Property) error {
+	return nil
+
+}
 func TestGetProperties(t *testing.T) {
 	e := newServer()
 
@@ -30,9 +35,19 @@ func TestGetProperties(t *testing.T) {
 			Property: mockStore,
 		},
 	}
+	tests := []struct {
+		name     string
+		urlPath  string
+		wantCode int
+		wantBody string
+	}{
+		{
+			name: ,
+		}
+	}
 
 	t.Run("successful response", func(t *testing.T) {
-		req := httptest.NewRequest(http.MethodGet, "/?url=dd&url=dd", nil)
+		req := httptest.NewRequest(http.MethodGet, "/", nil)
 		rec := httptest.NewRecorder()
 		c := e.NewContext(req, rec)
 

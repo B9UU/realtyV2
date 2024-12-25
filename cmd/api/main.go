@@ -7,7 +7,6 @@ import (
 	"realtyV2/internal/scraper"
 	"strconv"
 
-	"github.com/go-playground/validator/v10"
 	"github.com/joho/godotenv"
 	"github.com/labstack/echo/v4"
 	_ "github.com/lib/pq"
@@ -34,7 +33,6 @@ func main() {
 
 func newServer() *echo.Echo {
 	s := echo.New()
-	s.Validator = &CustomValidator{validator: validator.New()}
 	return s
 }
 func newApp() *Application {

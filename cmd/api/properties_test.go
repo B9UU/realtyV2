@@ -39,24 +39,27 @@ func TestGetProperties(t *testing.T) {
 		name     string
 		urlPath  string
 		wantCode int
-		wantBody string
 	}{
 		{
-			name: ,
-		}
+			name:     "valid queries",
+			urlPath:  "/?q=amesterdam&page=1",
+			wantCode: http.StatusOK,
+		},
+		{
+			name:     "invalid queries",
+			urlPath:  "/?q=am&page-1",
+			wantCode: http.StatusBadRequest,
+		},
 	}
-
-	t.Run("successful response", func(t *testing.T) {
-		req := httptest.NewRequest(http.MethodGet, "/", nil)
-		rec := httptest.NewRecorder()
-		c := e.NewContext(req, rec)
-
-		// Call the handler
-		err := app.GetProperties(c)
-		if assert.NoError(t, err) {
-			assert.Equal(t, http.StatusOK, rec.Code)
-			assert.Equal(t, rec.Header().Get("content-Type"), "application/json")
-		}
-
-	})
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			req := httptest.NewRequest(http.MethodGet, tt.urlPath, nil)
+			rec := httptest.NewRecorder()
+			c := e.NewContext(req, rec)
+			if assert.NoError(t, app.GetProperties(c)) {
+				assert.Equal(t, tt.wantCode, rec.Result().StatusCode)
+				assert.Equal(t, rec.Header().Get("content-Type"), "application/json")
+			}
+		})
+	}
 }

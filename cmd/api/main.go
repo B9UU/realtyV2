@@ -1,12 +1,15 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"os"
 	"realtyV2/internal/data"
+	"realtyV2/internal/repo"
 	"realtyV2/internal/scraper"
 	"strconv"
 
+	"github.com/jmoiron/sqlx"
 	"github.com/joho/godotenv"
 	"github.com/labstack/echo/v4"
 	_ "github.com/lib/pq"
@@ -18,6 +21,9 @@ type Application struct {
 	s       *echo.Echo
 	scraper scraper.Scraper
 	store   *data.Store
+	dd      *repo.Queries
+	// TODO: temporary
+	cache map[string]BoundBox
 }
 
 func main() {
@@ -41,7 +47,7 @@ func newApp() *Application {
 		logLevel = int(zerolog.InfoLevel)
 	}
 	log := zerolog.New(os.Stdout).Level(zerolog.Level(logLevel)).With().Caller().Timestamp().Logger()
-	store, err := data.NewStore(os.Getenv("POSTGRES_URL"), log)
+	db, err := Newdb(os.Getenv("POSTGRES_URL"))
 	if err != nil {
 		panic(err)
 	}
@@ -50,6 +56,20 @@ func newApp() *Application {
 		log:     log,
 		s:       newServer(),
 		scraper: scraper.Scraper{Log: log, Size: 20},
-		store:   store,
+		store:   data.NewStore(db, log),
+		dd:      repo.New(db),
+		cache:   make(map[string]BoundBox),
 	}
+}
+
+func Newdb(dbUrl string) (*sqlx.DB, error) {
+	db, err := sqlx.Open("postgres", dbUrl)
+	if err != nil {
+		fmt.Println("error: ", err)
+		return nil, err
+	}
+	if err := db.Ping(); err != nil {
+		return nil, err
+	}
+	return db, nil
 }

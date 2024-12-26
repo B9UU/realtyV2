@@ -3,7 +3,7 @@ CREATE TABLE IF NOT EXISTS  parking(
     text text NOT NULL UNIQUE
 );
 
-CREATE TABLE IF NOT EXISTS  parkings(
+CREATE TABLE IF NOT EXISTS  parking_listing(
   listing_id int NOT NULL REFERENCES listings(id) ON DELETE CASCADE,
   parking_id int NOT NULL REFERENCES parking(id) ON DELETE CASCADE,
   PRIMARY KEY(parking_id, listing_id)

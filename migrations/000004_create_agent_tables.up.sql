@@ -8,7 +8,7 @@ CREATE TABLE IF NOT EXISTS agent (
   association text NOT NULL
 );
 
-CREATE TABLE IF NOT EXISTS agents (
+CREATE TABLE IF NOT EXISTS agent_listing (
   listing_id integer NOT NULL REFERENCES listings(id) ON DELETE CASCADE,
   agent_id integer NOT NULL REFERENCES agent(id) ON DELETE CASCADE,
   PRIMARY KEY(listing_id, agent_id)

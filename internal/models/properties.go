@@ -53,10 +53,10 @@ type Property struct {
 	Parking                     pq.StringArray `json:"parking_facility,omitempty" db:"parking_facility"`
 	SellPrice                   int            `json:"sell_price,omitempty" db:"sell_price"`
 	RentPrice                   int            `json:"rent_price,omitempty" db:"rent_price"`
-	OfferingType                pq.StringArray `json:"offering_type" db:"offering_type"`
-	Thumb                       pq.Int64Array  `json:"thumbnail_id" db:"thumbnail_id"`
-	Lon                         float32        `json:"lon" db:"lon"`
-	Lat                         float32        `json:"lat" db:"lat"`
+	OfferingType                pq.StringArray `json:"offering_type,omitempty" db:"offering_type"`
+	Thumb                       pq.Int64Array  `json:"thumbnail_id,omitempty" db:"thumbnail_id"`
+	Lon                         float32        `json:"lon,omitempty" db:"lon"`
+	Lat                         float32        `json:"lat,omitempty" db:"lat"`
 }
 type AreaRange struct {
 	Gte int `json:"gte" db:"gte"`
@@ -73,13 +73,13 @@ func (a *AreaRange) Scan(value interface{}) error {
 }
 
 type Agent struct {
-	ID          int64  `db:"id" json:"id,omitempty"`
-	LogoType    string `db:"logo_type" json:"logo_type,omitempty"`
-	RelativeURL string `db:"relative_url" json:"relative_url,omitempty"`
-	IsPrimary   bool   `db:"is_primary" json:"is_primary,omitempty"`
-	LogoID      int    `db:"logo_id" json:"logo_id,omitempty"`
-	Name        string `db:"name" json:"name,omitempty"`
-	Association string `db:"association" json:"association,omitempty"`
+	ID          int64  `db:"id,omitempty" json:"id,omitempty"`
+	LogoType    string `db:"logo_type,omitempty" json:"logo_type,omitempty"`
+	RelativeURL string `db:"relative_url,omitempty" json:"relative_url,omitempty"`
+	IsPrimary   bool   `db:"is_primary,omitempty" json:"is_primary,omitempty"`
+	LogoID      int    `db:"logo_id,omitempty" json:"logo_id,omitempty"`
+	Name        string `db:"name,omitempty" json:"name,omitempty"`
+	Association string `db:"association,omitempty" json:"association,omitempty"`
 }
 
 func (a *Agents) Scan(value interface{}) error {
@@ -97,7 +97,7 @@ type Address struct {
 	Wijk              string `json:"wijk,omitempty" db:"wijk"`
 	City              string `json:"city,omitempty" db:"city"`
 	Neighbourhood     string `json:"neighbourhood,omitempty" db:"neighbourhood"`
-	HouseNumberSuffix string `json:"house_number_suffix" db:"house_number_suffix"`
+	HouseNumberSuffix string `json:"house_number_suffix,omitempty" db:"house_number_suffix"`
 	Municipality      string `json:"municipality,omitempty" db:"municipality"`
 	IsBagAddress      bool   `json:"is_bag_address,omitempty" db:"is_bag_address"`
 	HouseNumber       string `json:"house_number,omitempty" db:"house_number"`

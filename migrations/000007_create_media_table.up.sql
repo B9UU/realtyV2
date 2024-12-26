@@ -3,7 +3,7 @@ CREATE TABLE IF NOT EXISTS  media_type(
     text text NOT NULL UNIQUE
 );
 
-CREATE TABLE IF NOT EXISTS  media_types(
+CREATE TABLE IF NOT EXISTS  media_type_listing(
   listing_id int NOT NULL REFERENCES listings(id) ON DELETE CASCADE,
   media_type_id int NOT NULL REFERENCES media_type(id) ON DELETE CASCADE,
   PRIMARY KEY(media_type_id, listing_id)

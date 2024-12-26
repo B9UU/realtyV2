@@ -1,7 +1,7 @@
 package data
 
 import (
-	"fmt"
+	"context"
 	"realtyV2/internal/models"
 
 	"github.com/jmoiron/sqlx"
@@ -12,24 +12,16 @@ type Store struct {
 	Property PropertyInterface
 }
 
-func NewStore(dbUrl string, log zerolog.Logger) (*Store, error) {
-	db, err := sqlx.Open("postgres", dbUrl)
-	if err != nil {
-		fmt.Println("error: ", err)
-		return nil, err
-	}
-	fmt.Println(db.DriverName())
-	if err := db.Ping(); err != nil {
-		return nil, err
-	}
+func NewStore(db *sqlx.DB, log zerolog.Logger) *Store {
 	return &Store{
 		Property: NewPropertyStore(db, log),
-	}, err
+	}
 }
 
 type PropertyInterface interface {
 	GetAll() ([]models.Property, error)
 	GetById(id int) (models.Property, error)
 	AddOne(listing models.Property) error
+	Search(ctx context.Context, b []string) ([]models.Property, error)
 	// InsertAmenities(ctx context.Context, tx *sqlx.Tx, amenities []string, listingID int) error
 }

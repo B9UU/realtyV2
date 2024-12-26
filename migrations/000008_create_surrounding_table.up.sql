@@ -3,7 +3,7 @@ CREATE TABLE IF NOT EXISTS  surrounding(
     text text NOT NULL UNIQUE
 );
 
-CREATE TABLE IF NOT EXISTS  surroundings(
+CREATE TABLE IF NOT EXISTS  surrounding_listing(
   listing_id int NOT NULL REFERENCES listings(id) ON DELETE CASCADE,
   surrounding_id int NOT NULL REFERENCES surrounding(id) ON DELETE CASCADE,
   PRIMARY KEY(surrounding_id, listing_id)

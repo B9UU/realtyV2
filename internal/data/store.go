@@ -1,6 +1,7 @@
 package data
 
 import (
+	"context"
 	"fmt"
 	"realtyV2/internal/models"
 
@@ -32,4 +33,6 @@ type PropertyInterface interface {
 	GetById(id int) (models.Property, error)
 	AddOne(listing models.Property) error
 	// InsertAmenities(ctx context.Context, tx *sqlx.Tx, amenities []string, listingID int) error
+
+	Search(ctx context.Context, b []string) ([]models.Property, error)
 }

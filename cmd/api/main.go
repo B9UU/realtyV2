@@ -18,6 +18,8 @@ type Application struct {
 	s       *echo.Echo
 	scraper scraper.Scraper
 	store   *data.Store
+	// TODO: temporary
+	cache map[string]BoundBox
 }
 
 func main() {
@@ -51,5 +53,6 @@ func newApp() *Application {
 		s:       newServer(),
 		scraper: scraper.Scraper{Log: log, Size: 20},
 		store:   store,
+		cache:   make(map[string]BoundBox),
 	}
 }

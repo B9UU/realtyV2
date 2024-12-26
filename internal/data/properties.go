@@ -30,6 +30,20 @@ func NewPropertyStore(db *sqlx.DB, log zerolog.Logger) *PropertyStore {
 // SELECT id
 // FROM listings
 // WHERE geohash && ST_MakeEnvelope(4.3793095, 51.8616672, 4.6018083, 51.9942816, 4326);
+func (p *PropertyStore) Search(ctx context.Context, b []string) ([]models.Property, error) {
+	stmt := `
+		SELECT id
+		FROM listings
+		WHERE geohash && ST_MakeEnvelope($1, $2, $3, $4, 4326);
+	`
+	args := []interface{}{b[0], b[1], b[2], b[3]}
+	res := []models.Property{}
+	err := p.DB.SelectContext(ctx, &res, stmt, args...)
+	if err != nil {
+		return nil, err
+	}
+	return res, nil
+}
 
 func (p *PropertyStore) GetAll() ([]models.Property, error) {
 	stmt := `

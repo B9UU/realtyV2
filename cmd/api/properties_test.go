@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"net/http"
 	"net/http/httptest"
 	"realtyV2/internal/data"
@@ -14,6 +15,10 @@ type MockStore struct {
 }
 
 func (m *MockStore) GetAll() ([]models.Property, error) {
+	return []models.Property{}, nil
+}
+
+func (m *MockStore) Search(ctx context.Context, b []string) ([]models.Property, error) {
 	return []models.Property{}, nil
 }
 
@@ -34,6 +39,7 @@ func TestGetProperties(t *testing.T) {
 		store: &data.Store{
 			Property: mockStore,
 		},
+		cache: make(map[string]BoundBox),
 	}
 	tests := []struct {
 		name     string
@@ -43,6 +49,11 @@ func TestGetProperties(t *testing.T) {
 		{
 			name:     "valid queries",
 			urlPath:  "/?q=amesterdam&page=1",
+			wantCode: http.StatusOK,
+		},
+		{
+			name:     "valid queries",
+			urlPath:  "/?q=amesterdam",
 			wantCode: http.StatusOK,
 		},
 		{

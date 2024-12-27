@@ -1,13 +1,15 @@
 CREATE TABLE IF NOT EXISTS plot_area_range (
     id bigserial PRIMARY KEY,
-    gte integer NOT NULL ,
-    lte integer NOT NULL
+    gte integer NOT NULL,
+    lte integer NOT NULL,
+    UNIQUE (gte, lte)
 );
 
 CREATE TABLE IF NOT EXISTS floor_area_range (
     id bigserial PRIMARY KEY,
-    gte integer NOT NULL ,
-    lte integer NOT NULL
+    gte integer NOT NULL,
+    lte integer NOT NULL,
+    UNIQUE (gte, lte)
 );
 
 ALTER TABLE listings

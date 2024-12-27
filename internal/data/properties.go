@@ -299,25 +299,20 @@ VALUES(
 
 func (p *PropertyStore) InsertRange(ctx context.Context, tx *sqlx.Tx, ARange *models.AreaRange, rangeTpe string) (int, error) {
 	var plot_id int
-	stmt := fmt.Sprintf(`SELECT id FROM %s_area_range WHERE gte=$1 and lte=$2;`, rangeTpe)
+	stmt := fmt.Sprintf(`
+		INSERT INTO %s_area_range (gte, lte)
+		VALUES ($1, $2)
+		ON CONFLICT (gte, lte) 
+		DO UPDATE SET gte = EXCLUDED.gte, lte = EXCLUDED.lte
+		RETURNING id;
+`, rangeTpe)
 	args := []interface{}{ARange.Gte, ARange.Lte}
 	p.Log.Debug().Msg("Checking plot_area: ")
 	err := tx.GetContext(ctx, &plot_id, stmt, args...)
 	if err != nil {
-		if err != sql.ErrNoRows {
-			return 0, err
-		}
-		stmt = fmt.Sprintf(
-			`
-		INSERT INTO %s_area_range (gte, lte)
-		VALUES ($1, $2) RETURNING id;
-		`, rangeTpe)
-		p.Log.Debug().Msg("inserting plot_area:")
-		err = tx.GetContext(ctx, &plot_id, stmt, args...)
-		if err != nil {
-			return 0, err
-		}
+		return 0, err
 	}
+
 	return plot_id, nil
 }
 
@@ -361,31 +356,34 @@ func (p *PropertyStore) InsertAgents(ctx context.Context, tx *sqlx.Tx, agents *m
 }
 func (p *PropertyStore) InsertAttr(ctx context.Context, tx *sqlx.Tx, table, tables string, attrs []string, listingID int) error {
 
+	if len(attrs) == 0 {
+		return nil
+	}
+	attributes := []map[string]interface{}{}
 	for _, attr := range attrs {
 		var attrID int
-		stmt := fmt.Sprintf(`SELECT id from %s WHERE text=$1;`, table)
+		// stmt := fmt.Sprintf(`SELECT id from %s WHERE text=$1;`, table)
+		stmt := fmt.Sprintf(`
+			INSERT INTO %s (text)
+				VALUES ($1)
+				ON CONFLICT (text) DO UPDATE
+				SET text = EXCLUDED.text
+				RETURNING id;
+				`, table)
 
 		p.Log.Debug().Msgf("Checking attr: %s", table)
 		err := tx.QueryRowContext(ctx, stmt, attr).Scan(&attrID)
 		if err != nil {
-			if err != sql.ErrNoRows {
-				return fmt.Errorf("error checking %s %w", table, err)
-			}
-			stmt = fmt.Sprintf(`INSERT INTO %s (text) VALUES($1) RETURNING id`, table)
-
-			p.Log.Debug().Msgf("inserting to attr: %s", table)
-			err = tx.QueryRowContext(ctx, stmt, attr).Scan(&attrID)
-			if err != nil {
-				return fmt.Errorf("error inserting %s %w", table, err)
-			}
+			return err
 		}
-		stmt = fmt.Sprintf(`INSERT INTO %s (listing_id, %s_id) VALUES($1,$2)`, tables, table)
+		attributes = append(attributes, map[string]interface{}{"attr_id": attrID, "listing_id": listingID})
+	}
+	stmt := fmt.Sprintf(`INSERT INTO %s (listing_id, %s_id) VALUES(:listing_id,:attr_id)`, tables, table)
 
-		p.Log.Debug().Msgf("inserting to attr: %s", tables)
-		_, err = tx.ExecContext(ctx, stmt, listingID, attrID)
-		if err != nil {
-			return fmt.Errorf("error inserting into %s %w", tables, err)
-		}
+	p.Log.Debug().Msgf("inserting to attr: %s", tables)
+	_, err := tx.NamedExecContext(ctx, stmt, attributes)
+	if err != nil {
+		return fmt.Errorf("error inserting into %s %w", tables, err)
 	}
 	return nil
 }

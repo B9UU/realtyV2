@@ -55,11 +55,15 @@ func (app *Application) GetProperties(c echo.Context) error {
 	defer cancel()
 	res, err := app.store.Property.Search(ctx, dd.Boundingbox)
 	if err != nil {
+		app.log.Debug().Msgf("error: %v", err)
 		return err
 	}
 	return c.JSON(http.StatusOK, res)
 }
+
 func (app *Application) GetPropertiesScraped(c echo.Context) error {
+
+	app.log.Debug().Msg("here")
 	var v = validator.New()
 	q := new(queries)
 	if err := c.Bind(q); err != nil {
@@ -72,11 +76,15 @@ func (app *Application) GetPropertiesScraped(c echo.Context) error {
 		return app.failedValidationRespone(c, v.Errors)
 
 	}
+
+	app.log.Debug().Msg("here")
 	properties, err := app.scraper.Properties(q.Query, q.Page)
 	if err != nil {
 		app.log.Debug().Msgf("Unable to scrape, Error: %s", err.Error())
 		return err
 	}
+
+	app.log.Debug().Msg("here")
 	props := []models.Prop{}
 	for _, prop := range properties {
 		app.log.Debug().Msgf("Add %d", prop.ID)
@@ -84,8 +92,8 @@ func (app *Application) GetPropertiesScraped(c echo.Context) error {
 			models.Prop{
 				Id: prop.ID, ObjectType: prop.ObjectType,
 				OfferingType: prop.OfferingType,
-				Type:         prop.Type, Address: prop.Address,
-				RentPrice: prop.RentPrice, SellPrince: prop.SellPrice,
+				Type:         prop.Type, Address: *prop.Address,
+				RentPrice: prop.RentPrice, SellPrice: prop.SellPrice,
 			})
 		err = app.store.Property.AddOne(prop)
 		if err != nil {

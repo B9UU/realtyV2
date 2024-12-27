@@ -41,15 +41,15 @@ type Property struct {
 	PublishDateUtc              time.Time      `json:"publish_date_utc,omitempty" db:"publish_date_utc"`
 	PublishDate                 string         `json:"publish_date,omitempty" db:"publish_date"`
 	ObjectDetailPageRelativeURL string         `json:"object_detail_page_relative_url,omitempty" db:"relative_url"`
-	PlotRange                   AreaRange      `json:"plot_area_range,omitempty" db:"plot_area_range"`
-	FloorRange                  AreaRange      `json:"floor_area_range,omitempty" db:"floor_area_range"`
-	Agents                      Agents         `json:"agents,omitempty" db:"agents"`
+	PlotRange                   *AreaRange     `json:"plot_area_range,omitempty" db:"plot_area_range"`
+	FloorRange                  *AreaRange     `json:"floor_area_range,omitempty" db:"floor_area_range"`
+	Agents                      *Agents        `json:"agents,omitempty" db:"agents"`
 	PlotId                      int            `json:"plot_area_range_id,omitempty" db:"plot_area_range_id"`
 	FloorId                     int            `json:"floor_area_range_id,omitempty" db:"floor_area_range_id"`
 	Accessibility               pq.StringArray `json:"accessibility,omitempty" db:"accessibility"`
 	MediaTypes                  pq.StringArray `json:"media_types,omitempty" db:"media_types"`
 	Surrounding                 pq.StringArray `json:"surrounding,omitempty" db:"surrounding"`
-	Address                     Address        `json:"address,omitempty" db:"address"`
+	Address                     *Address       `json:"address,omitempty" db:"address"`
 	Parking                     pq.StringArray `json:"parking_facility,omitempty" db:"parking_facility"`
 	SellPrice                   int            `json:"sell_price,omitempty" db:"sell_price"`
 	RentPrice                   int            `json:"rent_price,omitempty" db:"rent_price"`
@@ -57,6 +57,7 @@ type Property struct {
 	Thumb                       pq.Int64Array  `json:"thumbnail_id,omitempty" db:"thumbnail_id"`
 	Lon                         float32        `json:"lon,omitempty" db:"lon"`
 	Lat                         float32        `json:"lat,omitempty" db:"lat"`
+	GeoHash                     string         `json:"-" db:"geohash"`
 }
 type AreaRange struct {
 	Gte int `json:"gte" db:"gte"`
@@ -137,18 +138,22 @@ func (p *Properties) UnmarshalJSON(data []byte) error {
 			PublishDateUtc:              v.Source.PublishDateUtc,
 			PublishDate:                 v.Source.PublishDate,
 			ObjectDetailPageRelativeURL: v.Source.ObjectDetailPageRelativeURL,
-			PlotRange:                   AreaRange(v.Source.PlotAreaRange),
-			FloorRange:                  AreaRange(v.Source.FloorAreaRange),
-			Agents:                      v.Source.Agent,
-			Accessibility:               v.Source.Accessibility,
-			MediaTypes:                  v.Source.AvailableMediaTypes,
-			Surrounding:                 v.Source.Surrounding,
-			Address:                     v.Source.Address,
-			Parking:                     v.Source.ParkingFacility,
-			SellPrice:                   v.Source.Price.SellingPriceRange.Lte,
-			RentPrice:                   v.Source.Price.RentPriceRange.Lte,
-			OfferingType:                v.Source.OfferingType,
-			Thumb:                       v.Source.ThumbnailID,
+			PlotRange: &AreaRange{
+				Gte: v.Source.PlotAreaRange.Gte,
+				Lte: v.Source.PlotAreaRange.Lte},
+			FloorRange: &AreaRange{
+				Gte: v.Source.FloorAreaRange.Gte,
+				Lte: v.Source.FloorAreaRange.Lte},
+			Agents:        &v.Source.Agent,
+			Accessibility: v.Source.Accessibility,
+			MediaTypes:    v.Source.AvailableMediaTypes,
+			Surrounding:   v.Source.Surrounding,
+			Address:       &v.Source.Address,
+			Parking:       v.Source.ParkingFacility,
+			SellPrice:     v.Source.Price.SellingPriceRange.Lte,
+			RentPrice:     v.Source.Price.RentPriceRange.Lte,
+			OfferingType:  v.Source.OfferingType,
+			Thumb:         v.Source.ThumbnailID,
 		}
 		newP.Lat = float32(v.Source.Location.Lat)
 		newP.Lon = float32(v.Source.Location.Lon)
@@ -158,13 +163,13 @@ func (p *Properties) UnmarshalJSON(data []byte) error {
 }
 
 type Prop struct {
-	Id           int            `json:"id,omitempty"`
-	ObjectType   string         `json:"object_type,omitempty"`
-	OfferingType pq.StringArray `json:"offering_type,omitempty"`
-	Type         string         `json:"type,omitempty"`
-	Address      Address        `json:"address,omitempty"`
-	RentPrice    int            `json:"rent_price,omitempty"`
-	SellPrince   int            `json:"sell_prince,omitempty"`
+	Id           int            `json:"id,omitempty" db:"id"`
+	ObjectType   string         `json:"object_type,omitempty" db:"object_type"`
+	OfferingType pq.StringArray `json:"offering_type,omitempty" db:"offering_type"`
+	Type         string         `json:"type,omitempty" db:"type"`
+	Address      Address        `json:"address,omitempty" db:"address"`
+	RentPrice    int            `json:"rent_price,omitempty" db:"rent_price"`
+	SellPrice    int            `json:"sell_prince,omitempty" db:"sell_price"`
 }
 
 // func (a Agents) Value() (driver.Value, error) {

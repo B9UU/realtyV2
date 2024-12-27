@@ -51,7 +51,7 @@ func newApp() *Application {
 	return &Application{
 		log:     log,
 		s:       newServer(),
-		scraper: scraper.Scraper{Log: log, Size: 20},
+		scraper: scraper.Scraper{Log: log, Size: 10},
 		store:   store,
 		cache:   make(map[string]BoundBox),
 	}

@@ -25,19 +25,30 @@ func NewPropertyStore(db *sqlx.DB, log zerolog.Logger) *PropertyStore {
 	}
 
 }
-
-// TODO: search by location
-// SELECT id
-// FROM listings
-// WHERE geohash && ST_MakeEnvelope(4.3793095, 51.8616672, 4.6018083, 51.9942816, 4326);
-func (p *PropertyStore) Search(ctx context.Context, b []string) ([]models.Property, error) {
+func (p *PropertyStore) Search(ctx context.Context, b []string) ([]models.Prop, error) {
 	stmt := `
-		SELECT id
-		FROM listings
-		WHERE geohash && ST_MakeEnvelope($1, $2, $3, $4, 4326);
+	SELECT
+		l.id, l.object_type, l.rent_price, l.sell_price,
+
+		ARRAY_AGG(DISTINCT offering_type.text) FILTER 
+		(WHERE offering_type.text IS NOT NULL) as offering_type,
+
+		COALESCE(row_to_json(address),'{}') as address
+
+		FROM listings l
+
+
+	LEFT JOIN offering_types ON offering_types.listing_id = l.id
+	LEFT JOIN offering_type ON offering_type.id = offering_types.offering_type_id
+
+	LEFT JOIN address ON address.listing_id = l.id
+
+	WHERE l.geohash && ST_MakeEnvelope($1, $2, $3, $4, 4326)
+	GROUP BY l.id, address.id;
+
 	`
 	args := []interface{}{b[0], b[1], b[2], b[3]}
-	res := []models.Property{}
+	res := []models.Prop{}
 	err := p.DB.SelectContext(ctx, &res, stmt, args...)
 	if err != nil {
 		return nil, err
@@ -61,33 +72,32 @@ SELECT
     COALESCE(row_to_json(address),'{}') as address
 
 FROM listings l
-LEFT JOIN amenities amnts ON amnts.listing_id = l.id
-LEFT JOIN amenity amnt ON amnts.amenity_id = amnt.id
+	LEFT JOIN amenities amnts ON amnts.listing_id = l.id
+	LEFT JOIN amenity amnt ON amnts.amenity_id = amnt.id
 
-LEFT JOIN media_types mtps ON mtps.listing_id = l.id
-LEFT JOIN media_type mtp ON mtps.media_type_id = mtp.id
+	LEFT JOIN media_types mtps ON mtps.listing_id = l.id
+	LEFT JOIN media_type mtp ON mtps.media_type_id = mtp.id
 
-LEFT JOIN agents agnts ON agnts.listing_id = l.id
-LEFT JOIN agent agnt ON agnts.agent_id = agnt.id
+	LEFT JOIN agents agnts ON agnts.listing_id = l.id
+	LEFT JOIN agent agnt ON agnts.agent_id = agnt.id
 
-LEFT JOIN accessibilities accs ON accs.listing_id =l.id
-LEFT JOIN accessibility acc ON acc.id = accs.accessibility_id
+	LEFT JOIN accessibilities accs ON accs.listing_id =l.id
+	LEFT JOIN accessibility acc ON acc.id = accs.accessibility_id
 
-LEFT JOIN surroundings srnds ON srnds.listing_id = l.id
-LEFT JOIN surrounding srnd ON srnds.surrounding_id = srnd.id
+	LEFT JOIN surroundings srnds ON srnds.listing_id = l.id
+	LEFT JOIN surrounding srnd ON srnds.surrounding_id = srnd.id
 
-LEFT JOIN address ON address.listing_id = l.id
+	LEFT JOIN address ON address.listing_id = l.id
 
-LEFT JOIN plot_area_range par ON par.id = l.plot_area_range_id
+	LEFT JOIN plot_area_range par ON par.id = l.plot_area_range_id
 
-LEFT JOIN parkings ON parkings.listing_id = l.id
-LEFT JOIN parking ON parkings.parking_id = parking.id
+	LEFT JOIN parkings ON parkings.listing_id = l.id
+	LEFT JOIN parking ON parkings.parking_id = parking.id
 
-LEFT JOIN offering_types ON offering_types.listing_id = l.id
-LEFT JOIN offering_type ON offering_type.id = offering_types.offering_type_id
+	LEFT JOIN offering_types ON offering_types.listing_id = l.id
+	LEFT JOIN offering_type ON offering_type.id = offering_types.offering_type_id
 
-GROUP BY l.id, par.id, address.id;
-
+	GROUP BY l.id, par.id, address.id;
 `
 	properties := []models.Property{}
 	err := p.DB.Select(&properties, stmt)
@@ -117,39 +127,39 @@ SELECT
 
 
 FROM listings l
-LEFT JOIN amenities amnts ON amnts.listing_id = l.id
-LEFT JOIN amenity amnt ON amnts.amenity_id = amnt.id
+	LEFT JOIN amenities amnts ON amnts.listing_id = l.id
+	LEFT JOIN amenity amnt ON amnts.amenity_id = amnt.id
 
-LEFT JOIN media_types mtps ON mtps.listing_id = l.id
-LEFT JOIN media_type mtp ON mtps.media_type_id = mtp.id
+	LEFT JOIN media_types mtps ON mtps.listing_id = l.id
+	LEFT JOIN media_type mtp ON mtps.media_type_id = mtp.id
 
-LEFT JOIN agents agnts ON agnts.listing_id = l.id
-LEFT JOIN agent agnt ON agnts.agent_id = agnt.id
+	LEFT JOIN agents agnts ON agnts.listing_id = l.id
+	LEFT JOIN agent agnt ON agnts.agent_id = agnt.id
 
-LEFT JOIN accessibilities accs ON accs.listing_id =l.id
-LEFT JOIN accessibility acc ON acc.id = accs.accessibility_id
+	LEFT JOIN accessibilities accs ON accs.listing_id =l.id
+	LEFT JOIN accessibility acc ON acc.id = accs.accessibility_id
 
-LEFT JOIN surroundings srnds ON srnds.listing_id = l.id
-LEFT JOIN surrounding srnd ON srnds.surrounding_id = srnd.id
+	LEFT JOIN surroundings srnds ON srnds.listing_id = l.id
+	LEFT JOIN surrounding srnd ON srnds.surrounding_id = srnd.id
 
-LEFT JOIN address ON address.listing_id = l.id
+	LEFT JOIN address ON address.listing_id = l.id
 
-LEFT JOIN plot_area_range par ON par.id = l.plot_area_range_id
+	LEFT JOIN plot_area_range par ON par.id = l.plot_area_range_id
 
-LEFT JOIN parkings ON parkings.listing_id = l.id
-LEFT JOIN parking ON parkings.parking_id = parking.id
+	LEFT JOIN parkings ON parkings.listing_id = l.id
+	LEFT JOIN parking ON parkings.parking_id = parking.id
 
-LEFT JOIN offering_types ON offering_types.listing_id = l.id
-LEFT JOIN offering_type ON offering_type.id = offering_types.offering_type_id
+	LEFT JOIN offering_types ON offering_types.listing_id = l.id
+	LEFT JOIN offering_type ON offering_type.id = offering_types.offering_type_id
 
-LEFT JOIN thumbnail ON thumbnail.listing_id = l.id
+	LEFT JOIN thumbnail ON thumbnail.listing_id = l.id
 
 WHERE l.id = $1
 
-GROUP BY l.id, par.id, address.id;
+	GROUP BY l.id, par.id, address.id;
 
 `
-	properties := models.Property{ID: id}
+	properties := models.Property{}
 	err := p.DB.Get(&properties, stmt, id)
 	if err != nil {
 		return models.Property{}, err
@@ -157,6 +167,7 @@ GROUP BY l.id, par.id, address.id;
 	return properties, nil
 }
 
+// FIX: expensive
 func (p *PropertyStore) AddOne(listing models.Property) error {
 	ctx := context.TODO()
 	stmt := `
@@ -164,7 +175,7 @@ func (p *PropertyStore) AddOne(listing models.Property) error {
 	`
 	p.Log.Debug().Msgf("Checking listing: %d", listing.ID)
 	var lisId int
-	err := p.DB.QueryRowContext(ctx, stmt, listing.ID).Scan(&lisId)
+	err := p.DB.GetContext(ctx, &lisId, stmt, listing.ID)
 	if err == nil {
 		return ErrAlreadyExists
 	}
@@ -286,12 +297,12 @@ VALUES(
 	return nil
 }
 
-func (p *PropertyStore) InsertRange(ctx context.Context, tx *sqlx.Tx, ARange models.AreaRange, rangeTpe string) (int, error) {
+func (p *PropertyStore) InsertRange(ctx context.Context, tx *sqlx.Tx, ARange *models.AreaRange, rangeTpe string) (int, error) {
 	var plot_id int
 	stmt := fmt.Sprintf(`SELECT id FROM %s_area_range WHERE gte=$1 and lte=$2;`, rangeTpe)
 	args := []interface{}{ARange.Gte, ARange.Lte}
 	p.Log.Debug().Msg("Checking plot_area: ")
-	err := tx.QueryRowContext(ctx, stmt, args...).Scan(&plot_id)
+	err := tx.GetContext(ctx, &plot_id, stmt, args...)
 	if err != nil {
 		if err != sql.ErrNoRows {
 			return 0, err
@@ -302,7 +313,7 @@ func (p *PropertyStore) InsertRange(ctx context.Context, tx *sqlx.Tx, ARange mod
 		VALUES ($1, $2) RETURNING id;
 		`, rangeTpe)
 		p.Log.Debug().Msg("inserting plot_area:")
-		err = tx.QueryRowContext(ctx, stmt, args...).Scan(&plot_id)
+		err = tx.GetContext(ctx, &plot_id, stmt, args...)
 		if err != nil {
 			return 0, err
 		}
@@ -310,14 +321,13 @@ func (p *PropertyStore) InsertRange(ctx context.Context, tx *sqlx.Tx, ARange mod
 	return plot_id, nil
 }
 
-func (p *PropertyStore) InsertAgents(ctx context.Context, tx *sqlx.Tx, agents models.Agents, listingID int) error {
-
-	for _, agent := range agents {
+func (p *PropertyStore) InsertAgents(ctx context.Context, tx *sqlx.Tx, agents *models.Agents, listingID int) error {
+	for _, agent := range *agents {
 		var agentID int
 		stmt := `SELECT id from agent WHERE id=$1;`
 
 		p.Log.Debug().Msgf("Checking agent: %d", agent.ID)
-		err := tx.QueryRowContext(ctx, stmt, agent.ID).Scan(&agentID)
+		err := tx.GetContext(ctx, &agentID, stmt, agent.ID)
 		if err != nil {
 			if err != sql.ErrNoRows {
 				return fmt.Errorf("error checking agent %w", err)
@@ -380,7 +390,7 @@ func (p *PropertyStore) InsertAttr(ctx context.Context, tx *sqlx.Tx, table, tabl
 	return nil
 }
 
-func (p *PropertyStore) InsertAddress(ctx context.Context, tx *sqlx.Tx, address models.Address, listing_id int) error {
+func (p *PropertyStore) InsertAddress(ctx context.Context, tx *sqlx.Tx, address *models.Address, listing_id int) error {
 
 	stmt := `
 		INSERT INTO address (
@@ -407,16 +417,16 @@ func (p *PropertyStore) InsertAddress(ctx context.Context, tx *sqlx.Tx, address 
 func (p *PropertyStore) InsertThumb(ctx context.Context, tx *sqlx.Tx, listingId int, ids []int64) error {
 	stmt := `
 	INSERT INTO thumbnail(listing_id,img)
-	VALUES($1,$2)
+	VALUES(:id,:image)
 	`
 	p.Log.Debug().Msg("inserting images")
+	images := []map[string]interface{}{}
 	for _, img := range ids {
-		args := []interface{}{listingId, img}
-		_, err := tx.ExecContext(ctx, stmt, args...)
-		if err != nil {
-			p.Log.Debug().Msg(err.Error())
-			continue
-		}
+		images = append(images, map[string]interface{}{"image": img, "id": listingId})
+	}
+	_, err := tx.NamedExecContext(ctx, stmt, images)
+	if err != nil {
+		return err
 	}
 	return nil
 }

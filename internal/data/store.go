@@ -34,5 +34,5 @@ type PropertyInterface interface {
 	AddOne(listing models.Property) error
 	// InsertAmenities(ctx context.Context, tx *sqlx.Tx, amenities []string, listingID int) error
 
-	Search(ctx context.Context, b []string) ([]models.Property, error)
+	Search(ctx context.Context, b []string) ([]models.Prop, error)
 }
